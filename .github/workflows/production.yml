@@ -1,0 +1,52 @@
+name: Production - Send Email
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  production:
+    name: Send Production Email
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Send production email
+        run: npx tsx src/scripts/send-production-email.ts
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
+          S3_BUCKET_URL: ${{ secrets.S3_BUCKET_URL }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Push config.json updates
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+          else
+            git add public/archives/**/config.json
+            git commit -m "MAIL: Update sentAt timestamps" || echo "No changes to commit"
+            git push
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
