@@ -13,10 +13,17 @@
 docs/
 ├── INDEX.md          # 本索引ファイル
 ├── dev/              # 開発関連ドキュメント
-│   └── branch.md     # ブランチ戦略とCI/CDワークフロー
+│   ├── branch.md     # ブランチ戦略とCI/CDワークフロー
+│   └── devcontainer.md  # VS Code Dev Container設定と使い方
+├── setup/            # 環境構築ガイド
+│   └── environment.md   # AWS、Resend、GitHub設定
+├── ops/              # 運用ガイド
+│   ├── workflow.md      # 日常的な配信フロー
+│   └── troubleshooting.md  # トラブルシューティング
 └── specs/            # 仕様関連ドキュメント
-    ├── require.md    # Resendメール配信システム要件定義書
-    └── task.md       # 実装タスクリスト
+    ├── require.md       # 要件定義書
+    ├── task.md          # 実装タスクリスト
+    └── architecture.md  # システムアーキテクチャ概要
 ```
 
 ## ドキュメント一覧
@@ -35,6 +42,30 @@ docs/
   - トラブルシューティング（ポート競合、認証エラー等）
   - カスタマイズガイド（拡張機能追加、ポート設定等）
 
+### 環境構築（setup/）
+
+- **[environment.md](./setup/environment.md)** - 環境構築ガイド
+  - AWS S3バケット設定（パブリックアクセス、CORS、IAM）
+  - Resend API設定（APIキー、Audience作成、From Email検証）
+  - GitHub Secrets設定（8項目の環境変数）
+  - GitHub Environments設定（production環境、Manual Approval）
+  - ローカル開発環境（.env設定、Node.js要件）
+
+### 運用関連（ops/）
+
+- **[workflow.md](./ops/workflow.md)** - 日常的なメール配信フロー
+  - ローカル制作 → アーカイブ → レビュー → 本番配信のステップバイステップ
+  - ブランチ戦略との統合（main直接push vs feature ブランチ）
+  - 緊急停止手順
+  - 配信履歴の確認方法
+
+- **[troubleshooting.md](./ops/troubleshooting.md)** - トラブルシューティング
+  - npm run commit エラー対処
+  - GitHub Actions エラー対処（Check、Staging、Production）
+  - 画像が表示されない問題の診断
+  - メールが届かない問題の診断
+  - config.json エラーの解読方法
+
 ### 仕様関連（specs/）
 
 - **[require.md](./specs/require.md)** - Resendメール配信システム要件定義書
@@ -50,6 +81,15 @@ docs/
   - タスク間の依存関係
   - 進捗管理
 
+- **[architecture.md](./specs/architecture.md)** - システムアーキテクチャ概要
+  - 全体フロー（ローカル制作 → S3 → テスト → 本番配信）
+  - 技術スタック詳細と選定理由
+  - 画像パス置換ロジック（開発時 `/mail-assets/` → 本番 S3 URL）
+  - メールHTML互換性設計（EmailWrapper テーブルレイアウト）
+  - Resend Audience ID管理の仕組み
+  - sentAt タイムスタンプ管理
+  - Manual Approval（二重チェック機構）
+
 ## 更新手順（PDCA）
 1. PLAN: 既存の配置と命名を本索引で確認し、追加箇所を決める。
 2. DO: 対応するサブディレクトリに Markdown を作成・更新し、本索引へ追記。
@@ -58,4 +98,4 @@ docs/
 
 ---
 
-最終更新日: 2025-12-18
+最終更新日: 2025-12-19
