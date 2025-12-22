@@ -109,10 +109,10 @@
 
 | 技術 | バージョン | 用途 | 選定理由 |
 |------|-----------|------|---------|
-| **Next.js** | 15.1.3 | フレームワーク | App Router、Hot Reload、React Server Components |
-| **React** | 19.0.0 | UIライブラリ | メールテンプレートをReactコンポーネントとして管理 |
-| **TypeScript** | 5.7.2 | 型安全性 | 開発体験向上、バグ防止 |
-| **@react-email/render** | latest | React → HTML変換 | Resend公式推奨、メールHTML生成 |
+| **Next.js** | 16.1.0 | フレームワーク | App Router、Turbopack、React Server Components、高速ビルド |
+| **React** | 19.2.3 | UIライブラリ | メールテンプレートをReactコンポーネントとして管理 |
+| **TypeScript** | 5.9.3 | 型安全性 | 開発体験向上、バグ防止 |
+| **@react-email/render** | 2.0.0 | React → HTML変換 | Resend公式推奨、メールHTML生成、非同期API対応 |
 | **@react-email/components** | latest | メール用コンポーネント | `<Img>`, `<Button>` 等、メールクライアント互換性 |
 | **Tailwind CSS** | 4.1.18 | スタイリング | ユーティリティファースト、開発効率 |
 | **ShadcnUI** | latest | UIコンポーネント | プレビュー画面のUI（メール本文には使用しない） |
@@ -800,4 +800,4 @@ if (!result.success) {
 
 ---
 
-最終更新日: 2025-12-19
+最終更新日: 2025-12-22
