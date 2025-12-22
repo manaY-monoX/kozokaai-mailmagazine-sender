@@ -321,6 +321,22 @@ npm outdated <package-name>
 - **検証**: ビルド、型チェック、Lint すべて成功
 - **参考**: Vercel Security Bulletin - https://vercel.com/changelog/cve-2025-55182
 
+### 2025-12-22: Next.js 16.1.0 メジャーアップグレード
+
+- **方針**: Turbopack安定版、長期サポート、将来の破壊的変更に備える
+- **対応**:
+  - Next.js 15.5.9 → 16.1.0（Turbopack デフォルト化）
+  - eslint-config-next 15.5.9 → 16.1.0
+  - tsconfig.json 自動更新（jsx: react-jsx、include: .next/dev/types/**/*.ts）
+- **破壊的変更の影響**: 本プロジェクトは影響なし
+  - Async Request APIs: 使用していない
+  - middleware.ts: 存在しない
+  - カスタムwebpack設定: なし
+  - images.domains: 使用していない
+- **検証**: ビルド成功（Turbopack 1218.2ms、11 workers並列処理）
+- **トラブルシューティング**: 初回ビルドエラー → `.next` 削除でクリーンビルド成功
+- **参考**: Next.js 16 Upgrade Guide - https://nextjs.org/docs/app/guides/upgrading/version-16
+
 ---
 
 最終更新日: 2025-12-22
