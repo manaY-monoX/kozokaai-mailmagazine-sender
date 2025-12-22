@@ -17,9 +17,9 @@
 ## 技術スタック
 
 ### Frontend/Template
-- **Next.js**: 15.1.3 (App Router)
-- **React**: 19.0.0
-- **TypeScript**: 5.7.2
+- **Next.js**: 16.1.0 (App Router, Turbopack)
+- **React**: 19.2.3
+- **TypeScript**: 5.9.3
 
 ### Email Platform
 - **Resend API**: メール配信プラットフォーム（SDK v6.6.0）

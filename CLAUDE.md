@@ -19,9 +19,9 @@ Resend メール配信システム。Next.js + React Email + Resend API + AWS S3
 ## 技術スタック
 
 ### コア技術
-- **Next.js**: 15.5.9 (App Router)
+- **Next.js**: 16.1.0 (App Router, Turbopack)
 - **React**: 19.2.3
-- **TypeScript**: 5.7.2
+- **TypeScript**: 5.9.3
 - **Tailwind CSS**: 4.1.18 (@tailwindcss/postcss)
 
 ### メール配信
