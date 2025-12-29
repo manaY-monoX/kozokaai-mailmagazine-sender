@@ -68,6 +68,9 @@ export default function Home() {
           <Link href="/draft">
             <Button size="lg">メール編集画面へ</Button>
           </Link>
+          <Link href="/archives">
+            <Button size="lg" variant="outline">配信履歴を見る</Button>
+          </Link>
           <a
             href="https://github.com/anthropics/claude-code"
             target="_blank"
