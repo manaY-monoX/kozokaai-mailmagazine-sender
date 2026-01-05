@@ -178,12 +178,12 @@ async function loadConfig(
 }
 
 /**
- * Resend API で本番配信（Audience一斉送信）
+ * Resend API で本番配信（Segment一斉送信）
  */
 async function sendProductionEmail(
   html: string,
   subject: string,
-  audienceId: string
+  segmentId: string
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
@@ -191,7 +191,7 @@ async function sendProductionEmail(
     // Step 1: Broadcast を作成
     const { data: createData, error: createError } = await resend.broadcasts.create({
       name: `Broadcast - ${subject}`,
-      audienceId: audienceId,
+      segmentId: segmentId,
       from: fromEmail,
       subject: subject,
       html,
@@ -388,7 +388,7 @@ async function main() {
     const sendResult = await sendProductionEmail(
       html,
       config.subject,
-      config.audienceId
+      config.segmentId || config.audienceId!
     );
 
     if (!sendResult.success) {
@@ -406,7 +406,7 @@ async function main() {
 
     console.log(chalk.green('  ✓ 本番メール配信'));
     console.log(chalk.gray(`    送信ID: ${sendResult.id}`));
-    console.log(chalk.gray(`    Audience ID: ${config.audienceId}`));
+    console.log(chalk.gray(`    Segment ID: ${config.segmentId || config.audienceId}`));
     console.log(chalk.gray(`    件名: ${config.subject}`));
 
     // 6. config.json の sentAt を更新

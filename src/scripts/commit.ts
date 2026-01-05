@@ -22,7 +22,7 @@ const ARCHIVES_DIR = path.join(PROJECT_ROOT, 'public/archives');
 interface CommitAnswers {
   commitMessage: string;
   subject: string;
-  audienceId: string;
+  segmentId: string;
 }
 
 /**
@@ -81,14 +81,19 @@ async function main() {
     },
     {
       type: 'input',
-      name: 'audienceId',
-      message: 'Resend Audience ID (例: aud_12345678):',
+      name: 'segmentId',
+      message: 'Resend Segment ID (例: 78261eea-8f8b-4381-83c6-79fa7120f1cf):',
       validate: (input: string) => {
         if (!input || input.trim().length === 0) {
-          return 'Audience IDは必須です';
+          return 'Segment IDは必須です';
         }
-        if (!/^aud_[a-zA-Z0-9]+$/.test(input)) {
-          return 'Audience IDの形式が不正です（例: aud_12345678）';
+        // UUID v4 形式
+        if (
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            input
+          )
+        ) {
+          return 'Segment IDの形式が不正です（UUID形式で入力してください）';
         }
         return true;
       },
@@ -148,7 +153,7 @@ async function main() {
   const configFile = path.join(archiveDir, 'config.json');
   const config = {
     subject: answers.subject,
-    audienceId: answers.audienceId,
+    segmentId: answers.segmentId,
     sentAt: null,
   };
 

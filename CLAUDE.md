@@ -75,13 +75,13 @@ pnpm run commit
 対話形式で以下を入力:
 - コミットメッセージ（例: `summer-sale`）
 - メール件名（例: `【サマーセール】最大50%OFFのお知らせ`）
-- Resend Audience ID（例: `aud_abc123`）
+- Resend Segment ID（例: `78261eea-8f8b-4381-83c6-79fa7120f1cf`）
 
 スクリプトが自動的に:
 1. アーカイブディレクトリを作成（`public/archives/{YYYY}/{MM}/{DD-MSG}/`）
 2. `src/app/draft/page.tsx` → `mail.tsx` に移動
 3. `public/mail-assets/` → `assets/` に画像移動
-4. `config.json` 生成（subject, audienceId, sentAt: null）
+4. `config.json` 生成（subject, segmentId, sentAt: null）
 5. `src/app/draft/page.tsx` を初期テンプレートにリセット
 6. Git commit & push（コミットメッセージ: `MAIL: {message}`）
 
@@ -294,7 +294,7 @@ module.exports = {
 - ESLint実行
 - TypeScript型チェック
 - Next.jsビルド
-- アーカイブバリデーション（config.json、画像パス、Audience ID確認）
+- アーカイブバリデーション（config.json、画像パス、Segment ID確認）
 
 ### staging.yml
 **Trigger**: Pull Request作成・更新
@@ -447,7 +447,7 @@ CHORE: Add devcontainer configuration
 **Check Workflow失敗**:
 - ESLint: `pnpm run lint` でローカル確認
 - TypeScript: `pnpm run type-check` でローカル確認
-- Validation: `config.json` の形式、Audience ID確認
+- Validation: `config.json` の形式、Segment ID確認
 
 **Staging Workflow失敗**:
 - S3アップロード: AWS認証情報確認（GitHub Secrets）
@@ -455,7 +455,7 @@ CHORE: Add devcontainer configuration
 
 **Production Workflow失敗**:
 - Manual Approval: 承認者が承認ボタン押下済みか確認
-- Resend API: Audience ID存在確認
+- Resend API: Segment ID存在確認
 
 ---
 
