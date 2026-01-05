@@ -5,7 +5,7 @@ import * as path from 'path';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
 import { validateConfig } from '../lib/config-schema';
-import { checkAudienceExists } from '../lib/resend';
+import { checkSegmentExists } from '../lib/resend';
 
 /**
  * GitHub Actions Check Workflow用バリデーションスクリプト
@@ -29,13 +29,33 @@ interface ValidationError {
  */
 function detectNewArchiveDirectories(): string[] {
   try {
-    // git diff で前回のコミットとの差分を取得
-    const diff = execSync('git diff --name-only HEAD^ HEAD', {
+    // git diff で前回のコミットとの差分を取得（ステータス付き）
+    const diff = execSync('git diff --name-status HEAD^ HEAD', {
       cwd: PROJECT_ROOT,
       encoding: 'utf-8',
     });
 
-    const changedFiles = diff.split('\n').filter(Boolean);
+    const changedLines = diff.split('\n').filter(Boolean);
+
+    // 削除操作（D）を除外し、追加/変更されたファイルのみを抽出
+    const changedFiles: string[] = [];
+    changedLines.forEach((line) => {
+      // フォーマット: "A\tpublic/archives/2025/01/05-test/mail.tsx"
+      // または: "M\tpublic/archives/2025/01/05-test/config.json"
+      // または: "D\tpublic/archives/2024/12/25-old/mail.tsx" (これを除外)
+      const parts = line.split('\t');
+      if (parts.length < 2) return;
+
+      const status = parts[0];
+      const file = parts[1];
+
+      // 削除操作（D）は除外
+      if (status.startsWith('D')) {
+        return;
+      }
+
+      changedFiles.push(file);
+    });
 
     // public/archives/ 配下のディレクトリを抽出
     const archiveDirs = new Set<string>();
@@ -156,30 +176,30 @@ function validateImagePaths(archiveDir: string): ValidationError | null {
 }
 
 /**
- * Resend Audience ID の検証
+ * Resend Segment ID の検証
  */
-async function validateAudienceId(
+async function validateSegmentId(
   archiveDir: string
 ): Promise<ValidationError | null> {
   const configPath = path.join(PROJECT_ROOT, archiveDir, 'config.json');
   const configContent = fs.readFileSync(configPath, 'utf-8');
   const config = JSON.parse(configContent);
 
-  const audienceId = config.audienceId;
-  if (!audienceId) {
+  const segmentId = config.segmentId || config.audienceId;
+  if (!segmentId) {
     return {
-      type: 'Audience ID',
-      message: 'config.json に audienceId が設定されていません',
+      type: 'Segment ID',
+      message: 'config.json に segmentId または audienceId が設定されていません',
     };
   }
 
-  // Resend API で Audience存在確認
-  const exists = await checkAudienceExists(audienceId);
+  // Resend API で Segment存在確認
+  const exists = await checkSegmentExists(segmentId);
   if (!exists) {
     return {
-      type: 'Audience ID',
-      message: 'Resend Audience が見つかりません',
-      details: `Audience ID: ${audienceId}`,
+      type: 'Segment ID',
+      message: 'Resend Segment が見つかりません',
+      details: `Segment ID: ${segmentId}`,
     };
   }
 
@@ -233,14 +253,14 @@ async function main() {
     }
     console.log(chalk.green('  ✓ 画像パス'));
 
-    // 3. Resend Audience ID検証
-    const audienceError = await validateAudienceId(archiveDir);
-    if (audienceError) {
-      errors.push({ dir: archiveDir, error: audienceError });
+    // 3. Resend Segment ID検証
+    const segmentError = await validateSegmentId(archiveDir);
+    if (segmentError) {
+      errors.push({ dir: archiveDir, error: segmentError });
       hasError = true;
       continue;
     }
-    console.log(chalk.green('  ✓ Resend Audience ID'));
+    console.log(chalk.green('  ✓ Resend Segment ID'));
 
     console.log();
   }

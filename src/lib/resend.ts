@@ -12,16 +12,16 @@ if (!process.env.RESEND_API_KEY) {
 export const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
- * Resend Audience存在確認
+ * Resend Segment存在確認
  *
- * @param audienceId - Resend Audience ID
+ * @param segmentId - Resend Segment ID (UUID形式)
  * @returns 存在する場合 true
  */
-export async function checkAudienceExists(
-  audienceId: string
+export async function checkSegmentExists(
+  segmentId: string
 ): Promise<boolean> {
   try {
-    const { data, error } = await resend.audiences.get(audienceId);
+    const { data, error } = await resend.segments.get(segmentId);
 
     if (error) {
       console.error('Resend API Error:', error);
@@ -30,19 +30,32 @@ export async function checkAudienceExists(
 
     return !!data;
   } catch (error) {
-    console.error('Failed to check audience:', error);
+    console.error('Failed to check segment:', error);
     return false;
   }
 }
 
 /**
- * Resend Audience一覧取得
+ * Resend Audience存在確認
  *
- * @returns Audience一覧
+ * @deprecated Use checkSegmentExists instead
+ * @param audienceId - Resend Audience ID
+ * @returns 存在する場合 true
  */
-export async function listAudiences() {
+export async function checkAudienceExists(
+  audienceId: string
+): Promise<boolean> {
+  return checkSegmentExists(audienceId);
+}
+
+/**
+ * Resend Segment一覧取得
+ *
+ * @returns Segment一覧
+ */
+export async function listSegments() {
   try {
-    const { data, error } = await resend.audiences.list();
+    const { data, error } = await resend.segments.list();
 
     if (error) {
       console.error('Resend API Error:', error);
@@ -51,7 +64,17 @@ export async function listAudiences() {
 
     return data?.data || [];
   } catch (error) {
-    console.error('Failed to list audiences:', error);
+    console.error('Failed to list segments:', error);
     return [];
   }
+}
+
+/**
+ * Resend Audience一覧取得
+ *
+ * @deprecated Use listSegments instead
+ * @returns Audience一覧
+ */
+export async function listAudiences() {
+  return listSegments();
 }

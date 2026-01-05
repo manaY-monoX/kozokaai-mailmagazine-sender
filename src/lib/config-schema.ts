@@ -1,31 +1,52 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * config.json スキーマ定義
  *
  * アーカイブディレクトリ内の config.json を検証するためのZodスキーマ
  */
-export const ConfigSchema = z.object({
-  /**
-   * メール件名
-   */
-  subject: z.string().min(1, 'メール件名は必須です'),
+export const ConfigSchema = z
+  .object({
+    /**
+     * メール件名
+     */
+    subject: z.string().min(1, "メール件名は必須です"),
 
-  /**
-   * Resend Audience ID
-   * 形式: aud_xxxxxxxx
-   */
-  audienceId: z
-    .string()
-    .regex(/^aud_[a-zA-Z0-9]+$/, 'Audience IDの形式が不正です（例: aud_12345678）'),
+    /**
+     * Resend Segment ID（推奨）
+     * 形式: UUID v4 (例: a355a0bd-32fa-4ef4-b6d5-7341f702d35b)
+     */
+    segmentId: z
+      .string()
+      .uuid(
+        "Segment IDの形式が不正です（例: a355a0bd-32fa-4ef4-b6d5-7341f702d35b）"
+      )
+      .optional(),
 
-  /**
-   * 送信日時（ISO 8601形式）
-   * null: 未送信
-   * string: 送信済み（送信日時）
-   */
-  sentAt: z.string().nullable(),
-});
+    /**
+     * Resend Audience ID（非推奨、後方互換性のため残す）
+     * 形式: aud_xxxxxxxx
+     * @deprecated Use segmentId instead
+     */
+    audienceId: z
+      .string()
+      .regex(
+        /^aud_[a-zA-Z0-9]+$/,
+        "Audience IDの形式が不正です（例: aud_12345678）"
+      )
+      .optional(),
+
+    /**
+     * 送信日時（ISO 8601形式）
+     * null: 未送信
+     * string: 送信済み（送信日時）
+     */
+    sentAt: z.string().nullable(),
+  })
+  .refine((data) => data.segmentId || data.audienceId, {
+    message: "segmentId または audienceId のいずれかは必須です",
+    path: ["segmentId"],
+  });
 
 /**
  * Config型定義

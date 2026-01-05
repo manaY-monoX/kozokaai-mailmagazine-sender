@@ -38,13 +38,33 @@ interface ArchiveMetadata {
  */
 function detectNewArchiveDirectories(): string[] {
   try {
-    // git diff で前回のコミットとの差分を取得
-    const diff = execSync('git diff --name-only HEAD^ HEAD', {
+    // git diff で前回のコミットとの差分を取得（ステータス付き）
+    const diff = execSync('git diff --name-status HEAD^ HEAD', {
       cwd: PROJECT_ROOT,
       encoding: 'utf-8',
     });
 
-    const changedFiles = diff.split('\n').filter(Boolean);
+    const changedLines = diff.split('\n').filter(Boolean);
+
+    // 削除操作（D）を除外し、追加/変更されたファイルのみを抽出
+    const changedFiles: string[] = [];
+    changedLines.forEach((line) => {
+      // フォーマット: "A\tpublic/archives/2025/01/05-test/mail.tsx"
+      // または: "M\tpublic/archives/2025/01/05-test/config.json"
+      // または: "D\tpublic/archives/2024/12/25-old/mail.tsx" (これを除外)
+      const parts = line.split('\t');
+      if (parts.length < 2) return;
+
+      const status = parts[0];
+      const file = parts[1];
+
+      // 削除操作（D）は除外
+      if (status.startsWith('D')) {
+        return;
+      }
+
+      changedFiles.push(file);
+    });
 
     // public/archives/ 配下のディレクトリを抽出
     const archiveDirs = new Set<string>();
@@ -178,12 +198,12 @@ async function loadConfig(
 }
 
 /**
- * Resend API で本番配信（Audience一斉送信）
+ * Resend API で本番配信（Segment一斉送信）
  */
 async function sendProductionEmail(
   html: string,
   subject: string,
-  audienceId: string
+  segmentId: string
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
@@ -191,7 +211,7 @@ async function sendProductionEmail(
     // Step 1: Broadcast を作成
     const { data: createData, error: createError } = await resend.broadcasts.create({
       name: `Broadcast - ${subject}`,
-      audienceId: audienceId,
+      segmentId: segmentId,
       from: fromEmail,
       subject: subject,
       html,
@@ -388,7 +408,7 @@ async function main() {
     const sendResult = await sendProductionEmail(
       html,
       config.subject,
-      config.audienceId
+      config.segmentId || config.audienceId!
     );
 
     if (!sendResult.success) {
@@ -406,7 +426,7 @@ async function main() {
 
     console.log(chalk.green('  ✓ 本番メール配信'));
     console.log(chalk.gray(`    送信ID: ${sendResult.id}`));
-    console.log(chalk.gray(`    Audience ID: ${config.audienceId}`));
+    console.log(chalk.gray(`    Segment ID: ${config.segmentId || config.audienceId}`));
     console.log(chalk.gray(`    件名: ${config.subject}`));
 
     // 6. config.json の sentAt を更新

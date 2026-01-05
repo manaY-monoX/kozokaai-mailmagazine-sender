@@ -10,7 +10,8 @@ export interface MailArchive {
   mm: string; // "05"
   ddMsg: string; // "20-summer-sale"
   subject: string;
-  audienceId: string;
+  segmentId?: string; // UUID形式（推奨）
+  audienceId?: string; // aud_xxx形式（非推奨、後方互換性のため残す）
   sentAt: string | null;
   path: string; // "2024/05/20-summer-sale"
   createdAt: Date;
@@ -82,6 +83,7 @@ export async function getArchiveList(): Promise<MailArchive[]> {
             mm,
             ddMsg,
             subject: config.subject,
+            segmentId: config.segmentId,
             audienceId: config.audienceId,
             sentAt: config.sentAt,
             path: `${yyyy}/${mm}/${ddMsg}`,
