@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * config.json スキーマ定義
@@ -10,16 +10,16 @@ export const ConfigSchema = z
     /**
      * メール件名
      */
-    subject: z.string().min(1, 'メール件名は必須です'),
+    subject: z.string().min(1, "メール件名は必須です"),
 
     /**
      * Resend Segment ID（推奨）
-     * 形式: UUID v4 (例: 78261eea-8f8b-4381-83c6-79fa7120f1cf)
+     * 形式: UUID v4 (例: a355a0bd-32fa-4ef4-b6d5-7341f702d35b)
      */
     segmentId: z
       .string()
       .uuid(
-        'Segment IDの形式が不正です（例: 78261eea-8f8b-4381-83c6-79fa7120f1cf）'
+        "Segment IDの形式が不正です（例: a355a0bd-32fa-4ef4-b6d5-7341f702d35b）"
       )
       .optional(),
 
@@ -32,7 +32,7 @@ export const ConfigSchema = z
       .string()
       .regex(
         /^aud_[a-zA-Z0-9]+$/,
-        'Audience IDの形式が不正です（例: aud_12345678）'
+        "Audience IDの形式が不正です（例: aud_12345678）"
       )
       .optional(),
 
@@ -44,8 +44,8 @@ export const ConfigSchema = z
     sentAt: z.string().nullable(),
   })
   .refine((data) => data.segmentId || data.audienceId, {
-    message: 'segmentId または audienceId のいずれかは必須です',
-    path: ['segmentId'],
+    message: "segmentId または audienceId のいずれかは必須です",
+    path: ["segmentId"],
   });
 
 /**
