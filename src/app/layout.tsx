@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { MantineProvider, ColorSchemeScript } from '@mantine/core';
+import { SidebarWrapper } from '@/components/layout/SidebarWrapper';
 
 export const metadata: Metadata = {
   title: 'Resend メール配信システム',
@@ -13,7 +15,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <head>
+        <ColorSchemeScript defaultColorScheme="auto" />
+      </head>
+      <body>
+        <MantineProvider defaultColorScheme="auto">
+          <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+            <SidebarWrapper />
+            <main style={{ flex: 1, overflowY: 'auto', marginLeft: 280 }}>
+              {children}
+            </main>
+          </div>
+        </MantineProvider>
+      </body>
     </html>
   );
 }
