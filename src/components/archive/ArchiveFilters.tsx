@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { TextInput, Button, Group, Stack } from '@mantine/core';
+import { IconSearch } from '@tabler/icons-react';
 
 export interface FilterState {
   search: string;
@@ -40,56 +40,55 @@ export function ArchiveFilters({ onFilterChange }: ArchiveFiltersProps) {
   };
 
   return (
-    <div className="space-y-4 mb-6">
-      <Input
+    <Stack gap="md" mb="xl">
+      <TextInput
         placeholder="件名で検索..."
         value={filters.search}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          handleSearchChange(e.target.value)
-        }
-        className="max-w-md"
+        onChange={(e) => handleSearchChange(e.target.value)}
+        leftSection={<IconSearch size={16} />}
+        style={{ maxWidth: 400 }}
       />
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex gap-2">
+      <Group gap="md">
+        <Group gap="xs">
           <Button
-            variant={filters.status === 'all' ? 'default' : 'outline'}
+            variant={filters.status === 'all' ? 'filled' : 'outline'}
             onClick={() => handleStatusChange('all')}
             size="sm"
           >
             すべて
           </Button>
           <Button
-            variant={filters.status === 'sent' ? 'default' : 'outline'}
+            variant={filters.status === 'sent' ? 'filled' : 'outline'}
             onClick={() => handleStatusChange('sent')}
             size="sm"
           >
             送信済み
           </Button>
           <Button
-            variant={filters.status === 'unsent' ? 'default' : 'outline'}
+            variant={filters.status === 'unsent' ? 'filled' : 'outline'}
             onClick={() => handleStatusChange('unsent')}
             size="sm"
           >
             未送信
           </Button>
-        </div>
-        <div className="flex gap-2">
+        </Group>
+        <Group gap="xs">
           <Button
-            variant={filters.sortOrder === 'desc' ? 'default' : 'outline'}
+            variant={filters.sortOrder === 'desc' ? 'filled' : 'outline'}
             onClick={() => handleSortOrderChange('desc')}
             size="sm"
           >
             最新順
           </Button>
           <Button
-            variant={filters.sortOrder === 'asc' ? 'default' : 'outline'}
+            variant={filters.sortOrder === 'asc' ? 'filled' : 'outline'}
             onClick={() => handleSortOrderChange('asc')}
             size="sm"
           >
             古い順
           </Button>
-        </div>
-      </div>
-    </div>
+        </Group>
+      </Group>
+    </Stack>
   );
 }

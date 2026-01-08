@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Container, Group, Anchor, Avatar, Text } from '@mantine/core';
 
 const navItems = [
   { href: '/', label: 'ホーム' },
@@ -13,30 +14,45 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-md bg-primary" />
-            <span className="text-lg font-semibold">Resend Mail</span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  pathname === item.href
-                    ? 'text-foreground'
-                    : 'text-muted-foreground'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </div>
+    <header style={{
+      position: 'sticky',
+      top: 0,
+      zIndex: 50,
+      width: '100%',
+      borderBottom: '1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-5))',
+      backgroundColor: 'light-dark(rgba(255, 255, 255, 0.95), rgba(26, 27, 30, 0.95))',
+      backdropFilter: 'blur(8px)'
+    }}>
+      <Container size="xl">
+        <Group h={64} justify="space-between">
+          <Group gap="xl">
+            <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Group gap="xs">
+                <Avatar size={32} radius="md" color="blue" />
+                <Text fw={600} size="lg">Resend Mail</Text>
+              </Group>
+            </Link>
+            <Group gap="md" visibleFrom="md">
+              {navItems.map((item) => (
+                <Anchor
+                  key={item.href}
+                  component={Link}
+                  href={item.href}
+                  size="sm"
+                  fw={500}
+                  c={pathname === item.href ? 'blue' : 'dimmed'}
+                  style={{
+                    transition: 'color 0.2s',
+                    textDecoration: 'none'
+                  }}
+                >
+                  {item.label}
+                </Anchor>
+              ))}
+            </Group>
+          </Group>
+        </Group>
+      </Container>
     </header>
   );
 }

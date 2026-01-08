@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { Stack, Center, Text } from '@mantine/core';
 import { ArchiveCard } from '@/components/archive/ArchiveCard';
 import {
   ArchiveFilters,
@@ -49,17 +50,17 @@ export function ArchiveListClient({ archives }: ArchiveListClientProps) {
     <>
       <ArchiveFilters onFilterChange={setFilters} />
 
-      <div className="space-y-4">
+      <Stack gap="md">
         {filteredArchives.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            該当するメールが見つかりませんでした
-          </div>
+          <Center py="xl">
+            <Text c="dimmed">該当するメールが見つかりませんでした</Text>
+          </Center>
         ) : (
           filteredArchives.map((archive) => (
             <ArchiveCard key={archive.path} archive={archive} />
           ))
         )}
-      </div>
+      </Stack>
     </>
   );
 }

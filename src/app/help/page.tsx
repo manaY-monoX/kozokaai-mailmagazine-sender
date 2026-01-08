@@ -1,18 +1,19 @@
 'use client';
 
-import { Card, Title, Text } from '@mantine/core';
+import { Container, Card, Title } from '@mantine/core';
+import { WorkflowSection } from '@/components/home/WorkflowSection';
 
 export default function HelpPage() {
   return (
-    <div className="container max-w-4xl py-12">
+    <Container size="lg" py="xl">
       <Card withBorder shadow="sm" radius="md">
         <Card.Section p="lg">
           <Title order={2}>使い方</Title>
         </Card.Section>
         <Card.Section p="lg">
-          <Text>メール配信システムの使い方</Text>
+          <WorkflowSection />
         </Card.Section>
       </Card>
-    </div>
+    </Container>
   );
 }
