@@ -17,7 +17,7 @@ export default async function RootLayout({
   const archives = await getArchiveList();
 
   return (
-    <html lang="ja">
+    <html lang="ja" suppressHydrationWarning>
       <head>
         <ColorSchemeScript defaultColorScheme="auto" />
       </head>
