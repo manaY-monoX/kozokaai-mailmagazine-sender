@@ -1,18 +1,21 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { MantineProvider, ColorSchemeScript } from '@mantine/core';
-import { SidebarWrapper } from '@/components/layout/SidebarWrapper';
+import { AppShellLayout } from '@/components/layout/AppShellLayout';
+import { getArchiveList } from '@/lib/archive-loader';
 
 export const metadata: Metadata = {
   title: 'Resend メール配信システム',
   description: 'メールマガジン作成・配信システム',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const archives = await getArchiveList();
+
   return (
     <html lang="ja">
       <head>
@@ -20,12 +23,9 @@ export default function RootLayout({
       </head>
       <body>
         <MantineProvider defaultColorScheme="auto">
-          <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-            <SidebarWrapper />
-            <main style={{ flex: 1, overflowY: 'auto', marginLeft: 280 }}>
-              {children}
-            </main>
-          </div>
+          <AppShellLayout archives={archives}>
+            {children}
+          </AppShellLayout>
         </MantineProvider>
       </body>
     </html>

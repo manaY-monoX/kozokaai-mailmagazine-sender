@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '@mantine/core';
 import { getArchiveList } from '@/lib/archive-loader';
 import { ArchiveListClient } from './ArchiveListClient';
 
@@ -21,9 +21,11 @@ export default async function ArchivesPage() {
             過去に送信したメールマガジン {archives.length}件
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/">ホームへ戻る</Link>
-        </Button>
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <Button variant="outline">
+            ホームへ戻る
+          </Button>
+        </Link>
       </div>
 
       <Suspense

@@ -1,21 +1,17 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { WorkflowSection } from '@/components/home/WorkflowSection';
+'use client';
 
-export const metadata = {
-  title: '使い方 | Resend メール配信システム',
-  description: 'メール配信システムの使い方とワークフロー',
-};
+import { Card, Title, Text } from '@mantine/core';
 
 export default function HelpPage() {
   return (
     <div className="container max-w-4xl py-12">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-3xl">使い方</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <WorkflowSection />
-        </CardContent>
+      <Card withBorder shadow="sm" radius="md">
+        <Card.Section p="lg">
+          <Title order={2}>使い方</Title>
+        </Card.Section>
+        <Card.Section p="lg">
+          <Text>メール配信システムの使い方</Text>
+        </Card.Section>
       </Card>
     </div>
   );

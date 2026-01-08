@@ -1,15 +1,38 @@
-export function SidebarHeader() {
+'use client';
+
+import { Group, Burger, ActionIcon, useMantineColorScheme } from '@mantine/core';
+import { IconSun, IconMoon } from '@tabler/icons-react';
+import styles from './SidebarHeader.module.css';
+
+export interface SidebarHeaderProps {
+  mobileOpened: boolean;
+  toggleMobile: () => void;
+}
+
+export function SidebarHeader({ mobileOpened, toggleMobile }: SidebarHeaderProps) {
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+
   return (
-    <div className="p-6 border-b border-gray-700">
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-md bg-primary flex items-center justify-center">
-          <span className="text-white font-bold text-lg">R</span>
+    <Group h="100%" px="md" justify="space-between" className={styles.header}>
+      <Group>
+        <Burger opened={mobileOpened} onClick={toggleMobile} hiddenFrom="sm" size="sm" />
+        <div className={styles.logo}>
+          <span className={styles.logoIcon}>R</span>
         </div>
         <div>
-          <h2 className="text-white font-semibold text-lg">Resend Mail</h2>
-          <p className="text-gray-400 text-xs">v0.1.0</p>
+          <div className={styles.title}>Resend Mail</div>
+          <div className={styles.version}>v0.1.0</div>
         </div>
-      </div>
-    </div>
+      </Group>
+
+      <ActionIcon
+        variant="default"
+        onClick={() => toggleColorScheme()}
+        size="lg"
+        aria-label="Toggle color scheme"
+      >
+        {colorScheme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
+      </ActionIcon>
+    </Group>
   );
 }

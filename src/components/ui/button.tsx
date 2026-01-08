@@ -1,7 +1,7 @@
 import { Button as MantineButton, ButtonProps as MantineButtonProps } from '@mantine/core';
-import { forwardRef } from 'react';
+import { forwardRef, ButtonHTMLAttributes } from 'react';
 
-export interface ButtonProps extends Omit<MantineButtonProps, 'color'> {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'filled' | 'light' | 'outline' | 'subtle' | 'default' | 'destructive' | 'secondary' | 'ghost';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
