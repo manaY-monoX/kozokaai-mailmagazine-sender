@@ -230,27 +230,37 @@ function executeGitCommit(commitMessage: string): GitOperationResult {
 
     return { success: true };
   } catch (error: unknown) {
+    // stdout と stderr の両方を取得
+    const stdout =
+      error instanceof Error && "stdout" in error
+        ? String(error.stdout)
+        : "";
     const stderr =
       error instanceof Error && "stderr" in error
         ? String(error.stderr)
-        : "Unknown error";
+        : "";
 
-    // "nothing to commit" エラーの検出
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    const lowerStderr = stderr.toLowerCase();
 
-    if (lowerStderr.includes("nothing to commit") ||
-        lowerStderr.includes("working tree clean")) {
+    // stdout と stderr を統合して検索
+    const fullOutput = (stdout + stderr).toLowerCase();
+
+    // "nothing to commit" の検出（stdout で出力される）
+    if (
+      fullOutput.includes("nothing to commit") ||
+      fullOutput.includes("working tree clean")
+    ) {
       return {
         success: true,
         nothingToCommit: true,
       };
     }
 
+    // その他のエラー
     return {
       success: false,
       error: errorMessage,
-      stderr,
+      stderr: stdout || stderr,  // stdout を優先して返す（git のメッセージは通常 stdout）
     };
   }
 }
