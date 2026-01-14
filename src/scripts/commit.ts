@@ -36,6 +36,7 @@ interface GitOperationResult {
   stderr?: string;
   needsUpstream?: boolean; // push専用
   branch?: string; // push専用
+  nothingToCommit?: boolean; // commit専用（変更がない場合）
 }
 
 /**
@@ -234,9 +235,21 @@ function executeGitCommit(commitMessage: string): GitOperationResult {
         ? String(error.stderr)
         : "Unknown error";
 
+    // "nothing to commit" エラーの検出
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const lowerStderr = stderr.toLowerCase();
+
+    if (lowerStderr.includes("nothing to commit") ||
+        lowerStderr.includes("working tree clean")) {
+      return {
+        success: true,
+        nothingToCommit: true,
+      };
+    }
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: errorMessage,
       stderr,
     };
   }
@@ -850,6 +863,27 @@ async function main() {
     displayProgress();
     displayDetailedError("commit", commitResult);
     process.exit(1);
+  }
+
+  // "nothing to commit" の場合
+  if (commitResult.nothingToCommit) {
+    updateStepStatus("git-commit", "success");
+    console.log(chalk.yellow("  ⚠ コミット対象の変更がありません"));
+    console.log(chalk.yellow("  → S3アップロードは完了しています\n"));
+
+    // git push もスキップ
+    updateStepStatus("git-push", "success");
+    console.log(chalk.gray("  ⊘ git push スキップ（コミットなし）\n"));
+
+    // 成功時の表示
+    displayProgress();
+
+    console.log(chalk.green.bold("✓ S3アップロードが完了しました！\n"));
+    console.log(chalk.blue("アーカイブは S3 に保存されています:"));
+    console.log(chalk.blue(`  archives/${year}/${month}/${dirName}/\n`));
+    console.log(chalk.yellow("注意: src/archives/ は .gitignore で除外されているため、Gitにはコミットされません\n"));
+
+    process.exit(0);
   }
 
   updateStepStatus("git-commit", "success");
