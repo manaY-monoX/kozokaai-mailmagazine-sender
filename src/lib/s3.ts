@@ -40,6 +40,7 @@ const MIME_TYPES: Record<string, string> = {
   '.webp': 'image/webp',
   '.svg': 'image/svg+xml',
   '.tsx': 'text/plain',
+  '.html': 'text/html',
   '.json': 'application/json',
 };
 
@@ -176,8 +177,8 @@ export async function uploadDirectoryToS3(
 }
 
 /**
- * アーカイブメタデータ（mail.tsx, config.json）をS3にアップロード
- * @param archiveDir - アーカイブディレクトリ（public/archives/YYYY/MM/DD-MSG）
+ * アーカイブメタデータ（mail.tsx, mail.html, config.json）をS3にアップロード
+ * @param archiveDir - アーカイブディレクトリ（src/archives/YYYY/MM/DD-MSG）
  * @param s3Prefix - S3プレフィックス（archives/YYYY/MM/DD-MSG）
  * @param bucketName - S3バケット名（環境変数から取得）
  * @returns アップロード結果のリスト
@@ -207,6 +208,14 @@ export async function uploadArchiveMetadataToS3(
     const s3Key = `${s3Prefix}/mail.tsx`;
     const result = await uploadFileToS3(mailTsxPath, s3Key, bucketName);
     results.push({ file: 'mail.tsx', ...result });
+  }
+
+  // mail.html をアップロード
+  const mailHtmlPath = path.join(archiveDir, 'mail.html');
+  if (fs.existsSync(mailHtmlPath)) {
+    const s3Key = `${s3Prefix}/mail.html`;
+    const result = await uploadFileToS3(mailHtmlPath, s3Key, bucketName);
+    results.push({ file: 'mail.html', ...result });
   }
 
   // config.json をアップロード
