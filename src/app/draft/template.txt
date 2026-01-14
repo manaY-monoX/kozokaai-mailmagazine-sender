@@ -17,7 +17,7 @@ import { Img } from '@/components/email/Img';
  * 画像は public/mail-assets/ に配置してください。
  * 例: <Img src="/mail-assets/hero.jpg" alt="Hero Image" width="600" />
  */
-export default function DraftEmail() {
+export default function Home() {
   return (
     <EmailWrapper
       preview={true}
@@ -65,7 +65,7 @@ export default function DraftEmail() {
             }}
           >
             <li style={{ marginBottom: '8px' }}>
-              このファイル (src/app/draft/page.tsx) を編集
+              このファイル (src/app/page.tsx) を編集
             </li>
             <li style={{ marginBottom: '8px' }}>
               画像を public/mail-assets/ に配置
