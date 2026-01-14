@@ -4,6 +4,7 @@ import 'dotenv/config';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getLatestArchiveFromS3 } from '../lib/s3';
 import { resend } from '../lib/resend';
 import { validateConfig, type Config } from '../lib/config-schema';
 import { format } from 'date-fns';
@@ -92,6 +93,27 @@ function buildArchivePath(directoryName: string): ArchiveMetadata {
   }
 
   return { yyyy, mm, ddMsg };
+}
+
+/**
+ * S3から最新のアーカイブを取得してArchiveMetadataを返す
+ */
+async function getTargetArchiveFromS3(directoryName?: string): Promise<ArchiveMetadata | null> {
+  const result = await getLatestArchiveFromS3(directoryName);
+
+  if (!result.success) {
+    console.error(chalk.red(`S3エラー: ${result.error}`));
+    return null;
+  }
+
+  console.log(chalk.green('✓ S3から最新アーカイブを検出しました'));
+  console.log(chalk.gray(`  LastModified: ${result.lastModified.toISOString()}`));
+
+  return {
+    yyyy: result.yyyy,
+    mm: result.mm,
+    ddMsg: result.ddMsg,
+  };
 }
 
 /**
@@ -272,16 +294,36 @@ async function main() {
   // 最新コミットから対象archiveを特定
   const directoryName = getTargetArchiveFromCommit();
 
-  if (!directoryName) {
-    console.log(
-      chalk.yellow('コミットメッセージから対象archiveが見つかりませんでした')
-    );
-    console.log(chalk.green('✓ テストメール送信完了（対象なし）\n'));
-    process.exit(0);
+  let archiveMetadata: ArchiveMetadata | null = null;
+
+  if (directoryName) {
+    console.log(chalk.cyan('検出方法: Gitコミットメッセージ'));
+    console.log(chalk.cyan('S3でディレクトリ名を検索中...\n'));
+
+    // buildArchivePath() を使わず、S3で直接検索
+    archiveMetadata = await getTargetArchiveFromS3(directoryName);
+
+    if (!archiveMetadata) {
+      console.log(chalk.red(`エラー: "${directoryName}" に一致するアーカイブが見つかりませんでした`));
+      console.log(chalk.green('✓ テストメール送信完了（対象なし）\n'));
+      process.exit(0);
+    }
+  } else {
+    // Gitコミットから検出できない場合、S3から最新アーカイブを取得
+    console.log(chalk.yellow('Gitコミットから検出できませんでした'));
+    console.log(chalk.cyan('S3から最新アーカイブを取得中...\n'));
+
+    archiveMetadata = await getTargetArchiveFromS3();
+
+    if (!archiveMetadata) {
+      console.log(chalk.yellow('S3からもアーカイブを取得できませんでした'));
+      console.log(chalk.green('✓ テストメール送信完了（対象なし）\n'));
+      process.exit(0);
+    }
   }
 
   // アーカイブパスを構築
-  const { yyyy, mm, ddMsg } = buildArchivePath(directoryName);
+  const { yyyy, mm, ddMsg } = archiveMetadata;
   const archivePath = `archives/${yyyy}/${mm}/${ddMsg}`;
 
   console.log(chalk.cyan(`対象アーカイブ: ${archivePath}\n`));
