@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
 import 'dotenv/config';
-import * as fs from 'fs';
-import * as path from 'path';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
@@ -19,7 +17,7 @@ import { getLatestArchiveFromS3 } from '../lib/s3';
  * 3. Resend APIで本番配信（Segment一斉送信）
  */
 
-const PROJECT_ROOT = path.resolve(__dirname, '../..');
+const PROJECT_ROOT = process.cwd();
 
 /**
  * S3 Client初期化
