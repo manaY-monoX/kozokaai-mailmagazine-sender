@@ -48,27 +48,30 @@ interface ArchiveMetadata {
 
 /**
  * 最新コミットメッセージから対象archiveディレクトリ名を抽出
+ * マージコミット対応: 最新10件のコミットから "MAIL:" プレフィックスを検索
  */
 function getTargetArchiveFromCommit(): string | null {
   try {
-    // 最新コミットメッセージを取得
-    const commitMessage = execSync('git log -1 --format=%s', {
+    // 最新10件のコミットから "MAIL:" プレフィックスを持つコミットを検索
+    const commitMessages = execSync('git log -10 --format=%s', {
       cwd: PROJECT_ROOT,
       encoding: 'utf-8',
-    }).trim();
+    }).trim().split('\n');
 
-    console.log(chalk.cyan(`最新コミット: ${commitMessage}`));
+    console.log(chalk.cyan(`コミット履歴を検索中...`));
 
-    // "MAIL: {directory-name}" 形式からディレクトリ名を抽出
-    const match = commitMessage.match(/^MAIL:\s*(.+)$/);
-    if (!match) {
-      return null;
+    for (const commitMessage of commitMessages) {
+      const match = commitMessage.match(/^MAIL:\s*(.+)$/);
+      if (match) {
+        console.log(chalk.cyan(`検出されたコミット: ${commitMessage}`));
+        const directoryName = match[1].trim();
+        console.log(chalk.cyan(`検出されたディレクトリ名: ${directoryName}`));
+        return directoryName;
+      }
     }
 
-    const directoryName = match[1].trim();
-    console.log(chalk.cyan(`検出されたディレクトリ名: ${directoryName}`));
-
-    return directoryName;
+    console.log(chalk.yellow('MAIL: プレフィックスを持つコミットが見つかりませんでした'));
+    return null;
   } catch (error) {
     console.error(chalk.red('エラー: git log の実行に失敗しました'));
     console.error(error);
