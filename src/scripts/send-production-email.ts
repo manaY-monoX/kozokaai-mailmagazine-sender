@@ -3,10 +3,9 @@
 import 'dotenv/config';
 import * as fs from 'fs';
 import * as path from 'path';
-import { pathToFileURL } from 'url';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
-import { render } from '@react-email/render';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { resend } from '../lib/resend';
 import { validateConfig, type Config } from '../lib/config-schema';
 import { getLatestArchiveFromS3 } from '../lib/s3';
@@ -15,13 +14,25 @@ import { getLatestArchiveFromS3 } from '../lib/s3';
  * GitHub Actions Production Workflow用本番配信スクリプト
  *
  * 新規追加されたarchiveディレクトリを検出し、以下を実行:
- * 1. React → HTML変換
+ * 1. S3からmail.htmlとconfig.jsonを取得
  * 2. 画像パス置換（/mail-assets/ → S3 URL）
- * 3. Resend APIで本番配信（Audience一斉送信）
- * 4. config.json の sentAt を更新してコミット
+ * 3. Resend APIで本番配信（Segment一斉送信）
  */
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
+
+/**
+ * S3 Client初期化
+ */
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION || 'ap-northeast-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME!;
 
 interface ProductionEmailError {
   type: string;
@@ -90,38 +101,54 @@ async function getTargetArchiveFromS3(directoryName?: string): Promise<ArchiveMe
 }
 
 /**
- * React コンポーネントをHTML に変換
+ * S3からオブジェクトを取得
  */
-async function renderMailComponent(
-  mailPath: string
-): Promise<{ html: string } | { error: string }> {
-  if (!fs.existsSync(mailPath)) {
-    return {
-      error: `mail.tsx が見つかりません: ${mailPath}`,
-    };
-  }
-
+async function getS3Object(key: string): Promise<string | null> {
   try {
-    // 動的インポート（pathToFileURL でクロスプラットフォーム対応）
-    const moduleUrl = pathToFileURL(mailPath).href;
-    const module = await import(moduleUrl);
-    const Component = module.default;
+    const command = new GetObjectCommand({
+      Bucket: S3_BUCKET_NAME,
+      Key: key,
+    });
 
-    // コンポーネントの型チェック
-    if (typeof Component !== 'function') {
-      throw new Error('Default export is not a React component');
+    const response = await s3Client.send(command);
+
+    if (!response.Body) {
+      return null;
     }
 
-    // React → HTML 変換
-    const html = await render(Component(), { plainText: false });
+    const bodyContents = await response.Body.transformToString();
+    return bodyContents;
+  } catch (error) {
+    console.error(`Failed to get S3 object: ${key}`, error);
+    return null;
+  }
+}
 
-    return { html };
+/**
+ * S3からmail.htmlを取得
+ */
+async function loadMailHtmlFromS3(
+  yyyy: string,
+  mm: string,
+  ddMsg: string
+): Promise<{ html: string } | { error: string }> {
+  const htmlKey = `archives/${yyyy}/${mm}/${ddMsg}/mail.html`;
+
+  try {
+    const htmlContent = await getS3Object(htmlKey);
+    if (!htmlContent) {
+      return {
+        error: `mail.html が見つかりません: ${htmlKey}`,
+      };
+    }
+
+    return { html: htmlContent };
   } catch (error) {
     return {
       error:
         error instanceof Error
           ? error.message
-          : 'React コンポーネントのレンダリングに失敗しました',
+          : 'mail.html の読み込みに失敗しました',
     };
   }
 }
@@ -146,21 +173,23 @@ function replaceImagePaths(
 }
 
 /**
- * config.json を読み込み・検証
+ * S3からconfig.jsonを取得
  */
-async function loadConfig(
-  archiveDir: string
+async function loadConfigFromS3(
+  yyyy: string,
+  mm: string,
+  ddMsg: string
 ): Promise<Config | { error: string }> {
-  const configPath = path.join(PROJECT_ROOT, archiveDir, 'config.json');
-
-  if (!fs.existsSync(configPath)) {
-    return {
-      error: `config.json が見つかりません: ${configPath}`,
-    };
-  }
+  const configKey = `archives/${yyyy}/${mm}/${ddMsg}/config.json`;
 
   try {
-    const configContent = fs.readFileSync(configPath, 'utf-8');
+    const configContent = await getS3Object(configKey);
+    if (!configContent) {
+      return {
+        error: `config.json が見つかりません: ${configKey}`,
+      };
+    }
+
     const configData = JSON.parse(configContent);
 
     // Zodスキーマでバリデーション
@@ -244,22 +273,6 @@ async function sendProductionEmail(
   }
 }
 
-/**
- * config.json の sentAt を更新
- */
-function updateConfigSentAt(archiveDir: string): void {
-  const configPath = path.join(PROJECT_ROOT, archiveDir, 'config.json');
-  const configContent = fs.readFileSync(configPath, 'utf-8');
-  const config = JSON.parse(configContent);
-
-  // 現在日時（ISO 8601形式）を設定
-  config.sentAt = new Date().toISOString();
-
-  // config.json を更新
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
-
-  console.log(chalk.gray(`  sentAt を更新: ${config.sentAt}`));
-}
 
 /**
  * config.json の更新を Git commit & push
@@ -346,23 +359,21 @@ async function main() {
 
   const { yyyy, mm, ddMsg } = archiveMetadata;
   const archivePath = `archives/${yyyy}/${mm}/${ddMsg}`;
-  const archiveDir = `src/${archivePath}`;
 
   console.log(chalk.cyan(`対象アーカイブ: ${archivePath}\n`));
 
   let hasError = false;
   const errors: ProductionEmailError[] = [];
 
-  // 1. React → HTML 変換
-  console.log(chalk.cyan('React → HTML 変換中...'));
-  const mailPath = path.join(PROJECT_ROOT, archiveDir, 'mail.tsx');
-  const renderResult = await renderMailComponent(mailPath);
+  // 1. S3からmail.htmlを取得
+  console.log(chalk.cyan('S3からmail.htmlを取得中...'));
+  const htmlResult = await loadMailHtmlFromS3(yyyy, mm, ddMsg);
 
-  if ('error' in renderResult) {
+  if ('error' in htmlResult) {
     errors.push({
-      type: 'レンダリング',
-      message: 'React コンポーネントのレンダリングに失敗しました',
-      details: renderResult.error,
+      type: 'mail.html',
+      message: 'mail.html の読み込みに失敗しました',
+      details: htmlResult.error,
     });
     hasError = true;
   }
@@ -380,16 +391,16 @@ async function main() {
     process.exit(1);
   }
 
-  let html = (renderResult as { html: string }).html;
-  console.log(chalk.green('✓ React → HTML 変換'));
+  let html = (htmlResult as { html: string }).html;
+  console.log(chalk.green('✓ mail.html 読み込み'));
 
   // 2. 画像パス置換
   html = replaceImagePaths(html, s3BaseUrl, yyyy, mm, ddMsg);
   console.log(chalk.green('✓ 画像パス置換'));
 
-  // 3. config.json 読み込み
-  console.log(chalk.cyan('config.jsonを取得中...'));
-  const configResult = await loadConfig(archiveDir);
+  // 3. S3からconfig.jsonを取得
+  console.log(chalk.cyan('S3からconfig.jsonを取得中...'));
+  const configResult = await loadConfigFromS3(yyyy, mm, ddMsg);
 
   if ('error' in configResult) {
     errors.push({
@@ -450,10 +461,6 @@ async function main() {
   console.log(chalk.gray(`  送信ID: ${sendResult.id}`));
   console.log(chalk.gray(`  Segment ID: ${config.segmentId || config.audienceId}`));
   console.log(chalk.gray(`  件名: ${config.subject}`));
-
-  // 5. config.json の sentAt を更新
-  updateConfigSentAt(archiveDir);
-  console.log(chalk.green('✓ sentAt 更新'));
 
   console.log(chalk.green.bold('\n✓ 本番メール配信が完了しました\n'));
   process.exit(0);
