@@ -37,6 +37,17 @@ export const ConfigSchema = z
       .optional(),
 
     /**
+     * 予約配信日時（ISO 8601形式、UTC）
+     * null: 即時配信
+     * string: 予約配信（配信予定日時）
+     */
+    scheduledAt: z
+      .string()
+      .datetime({ offset: true })
+      .nullable()
+      .optional(),
+
+    /**
      * 送信日時（ISO 8601形式）
      * null: 未送信
      * string: 送信済み（送信日時）

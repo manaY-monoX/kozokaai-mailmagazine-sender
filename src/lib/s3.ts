@@ -1,7 +1,8 @@
-import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Config, ConfigSchema } from './config-schema';
 
 /**
  * S3 Client（遅延初期化）
@@ -341,5 +342,255 @@ export async function getLatestArchiveFromS3(
       return { success: false, error: `S3 API error: ${error.message}` };
     }
     return { success: false, error: 'Unknown S3 error' };
+  }
+}
+
+/**
+ * S3から全アーカイブのconfig.jsonを取得
+ *
+ * @returns 全アーカイブのメタデータとconfig.jsonのリスト
+ */
+export async function getAllArchivesFromS3(): Promise<
+  Array<{
+    yyyy: string;
+    mm: string;
+    ddMsg: string;
+    config: Config;
+  }>
+> {
+  const bucket = process.env.S3_BUCKET_NAME;
+
+  if (!bucket) {
+    throw new Error('S3_BUCKET_NAME is not set');
+  }
+
+  try {
+    // S3からarchives/配下の全ディレクトリを列挙
+    const command = new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: 'archives/',
+      MaxKeys: 1000,
+    });
+
+    const response = await getS3Client().send(command);
+
+    if (!response.Contents || response.Contents.length === 0) {
+      return [];
+    }
+
+    // config.jsonで終わるキーのみをフィルタリング
+    const configFiles = response.Contents.filter(
+      (obj) => obj.Key && obj.Key.endsWith('/config.json')
+    );
+
+    if (configFiles.length === 0) {
+      return [];
+    }
+
+    // 各config.jsonを取得
+    const results: Array<{
+      yyyy: string;
+      mm: string;
+      ddMsg: string;
+      config: Config;
+    }> = [];
+
+    for (const file of configFiles) {
+      if (!file.Key) continue;
+
+      // パスをパース: archives/YYYY/MM/DD-MSG/config.json
+      const pattern = /^archives\/(\d{4})\/(\d{2})\/([\w-]+)\/config\.json$/;
+      const match = file.Key.match(pattern);
+
+      if (!match) {
+        console.warn(`警告: 不正なアーカイブパス: ${file.Key}`);
+        continue;
+      }
+
+      const [, yyyy, mm, ddMsg] = match;
+
+      // config.jsonを取得
+      try {
+        const config = await loadConfigFromS3(yyyy, mm, ddMsg);
+        results.push({ yyyy, mm, ddMsg, config });
+      } catch (error) {
+        console.error(`警告: config.json読み込み失敗: ${file.Key}`, error);
+        continue;
+      }
+    }
+
+    return results;
+  } catch (error) {
+    console.error('S3 getAllArchives Error:', error);
+    throw error;
+  }
+}
+
+/**
+ * S3からconfig.jsonを読み込み
+ *
+ * @param yyyy - 年
+ * @param mm - 月
+ * @param ddMsg - 日-メッセージ
+ * @returns Config
+ */
+export async function loadConfigFromS3(
+  yyyy: string,
+  mm: string,
+  ddMsg: string
+): Promise<Config> {
+  const bucket = process.env.S3_BUCKET_NAME;
+
+  if (!bucket) {
+    throw new Error('S3_BUCKET_NAME is not set');
+  }
+
+  try {
+    const s3Key = `archives/${yyyy}/${mm}/${ddMsg}/config.json`;
+
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: s3Key,
+    });
+
+    const response = await getS3Client().send(command);
+
+    if (!response.Body) {
+      throw new Error('S3 response body is empty');
+    }
+
+    // Streamを文字列に変換
+    const bodyString = await response.Body.transformToString('utf-8');
+
+    // JSONパース
+    const data = JSON.parse(bodyString);
+
+    // Zodバリデーション
+    const result = ConfigSchema.safeParse(data);
+
+    if (!result.success) {
+      throw new Error(`Config validation failed: ${result.error.message}`);
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('S3 loadConfig Error:', error);
+    throw error;
+  }
+}
+
+/**
+ * S3のconfig.jsonを更新
+ *
+ * @param yyyy - 年
+ * @param mm - 月
+ * @param ddMsg - 日-メッセージ
+ * @param sentAt - 送信日時
+ */
+export async function updateConfigSentAt(
+  yyyy: string,
+  mm: string,
+  ddMsg: string,
+  sentAt: string
+): Promise<void> {
+  const bucket = process.env.S3_BUCKET_NAME;
+
+  if (!bucket) {
+    throw new Error('S3_BUCKET_NAME is not set');
+  }
+
+  try {
+    // S3からconfig.jsonを取得
+    const config = await loadConfigFromS3(yyyy, mm, ddMsg);
+
+    // sentAtを更新
+    config.sentAt = sentAt;
+
+    // S3に書き戻す
+    const s3Key = `archives/${yyyy}/${mm}/${ddMsg}/config.json`;
+
+    const command = new PutObjectCommand({
+      Bucket: bucket,
+      Key: s3Key,
+      Body: JSON.stringify(config, null, 2),
+      ContentType: 'application/json',
+      ACL: 'public-read',
+    });
+
+    await getS3Client().send(command);
+  } catch (error) {
+    console.error('S3 updateConfigSentAt Error:', error);
+    throw error;
+  }
+}
+
+/**
+ * S3から対象アーカイブを取得（directoryName指定版）
+ *
+ * @param directoryName - ディレクトリ名
+ * @returns アーカイブメタデータまたはnull
+ */
+export async function getTargetArchiveFromS3(
+  directoryName: string
+): Promise<{
+  yyyy: string;
+  mm: string;
+  ddMsg: string;
+} | null> {
+  const result = await getLatestArchiveFromS3(directoryName);
+
+  if (result.success) {
+    return {
+      yyyy: result.yyyy,
+      mm: result.mm,
+      ddMsg: result.ddMsg,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * S3からmail.htmlを読み込み
+ *
+ * @param yyyy - 年
+ * @param mm - 月
+ * @param ddMsg - 日-メッセージ
+ * @returns HTML文字列またはエラー
+ */
+export async function loadMailHtmlFromS3(
+  yyyy: string,
+  mm: string,
+  ddMsg: string
+): Promise<{ html: string } | { error: string }> {
+  const bucket = process.env.S3_BUCKET_NAME;
+
+  if (!bucket) {
+    return { error: 'S3_BUCKET_NAME is not set' };
+  }
+
+  try {
+    const s3Key = `archives/${yyyy}/${mm}/${ddMsg}/mail.html`;
+
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: s3Key,
+    });
+
+    const response = await getS3Client().send(command);
+
+    if (!response.Body) {
+      return { error: 'S3 response body is empty' };
+    }
+
+    // Streamを文字列に変換
+    const html = await response.Body.transformToString('utf-8');
+
+    return { html };
+  } catch (error) {
+    if (error instanceof Error) {
+      return { error: error.message };
+    }
+    return { error: 'Unknown error' };
   }
 }
