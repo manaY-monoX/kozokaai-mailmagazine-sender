@@ -38,6 +38,25 @@ Resend メール配信システム。Next.js + React Email + Resend API + AWS S3
 - **Zod**: スキーマ検証
 - **tsx**: TypeScript実行
 
+### UIライブラリ（ダッシュボード用）
+- **Tailwind CSS 4.x**: PostCSSプラグイン（@tailwindcss/postcss 4.1.18）
+- **shadcn/ui パターン**: カスタム実装（Mantine UI削除済み）
+- **clsx**: 2.1.1（条件付きクラス名）
+- **tailwind-merge**: 3.4.0（クラス競合解決）
+- **実装コンポーネント**: Button, Card, Input, ArchiveCard, ArchiveFilters
+- **参考**: `docs/dev/ui-library.md`
+
+### メールテンプレート用デザインシステム
+- **インラインスタイル**: メールクライアント互換性のため
+- **EmailWrapper**: テーブルレイアウト（600px固定幅）
+- **Img**: 画像パス解決コンポーネント（開発時 `/mail-assets/` → 本番 S3 URL）
+- **カラーパレット**: Shadcn UIスタイルのslate系
+- **参考**: `docs/dev/design-system.md`
+
+**重要な使い分け**:
+- ✅ **ダッシュボード（管理画面）**: Tailwind CSSクラス + shadcn/ui パターン
+- ✅ **メールテンプレート**: インラインスタイルのみ（メールクライアント互換性のため）
+
 ---
 
 ## 開発コマンド
@@ -283,6 +302,36 @@ module.exports = {
 - EmailWrapper が同じタグを出力すると hydration error が発生
 - `preview={true}` でブラウザプレビュー時のみテーブルレイアウトを返却
 
+### 6. ダッシュボードとメールテンプレートのスタイリング分離
+
+**設計原則**: ダッシュボード（管理画面）とメールテンプレートで異なるスタイリング手法を使用。
+
+**ダッシュボード（管理画面）**:
+- ✅ Tailwind CSSクラス使用（`bg-blue-600`, `hover:shadow-md` など）
+- ✅ `cn()` ユーティリティで柔軟なスタイリング
+- ✅ Flexbox/Grid使用可能
+- ✅ React.forwardRef パターン
+- ✅ variant/size プロパティによる一貫性のあるデザインシステム
+- **実装**: `src/components/ui/`, `src/components/archive/`
+- **参考**: `docs/dev/ui-library.md`
+
+**メールテンプレート**:
+- ❌ Tailwind CSSクラス使用不可（メールクライアント非対応）
+- ❌ `cn()` ユーティリティ使用不可
+- ❌ Flexbox/Grid使用不可（Outlook、Gmail非対応）
+- ✅ インラインスタイルのみ使用
+- ✅ `<table>` タグレイアウト（EmailWrapper）
+- ✅ 固定幅（600px）で中央揃え
+- **実装**: `src/app/draft/page.tsx`, `src/components/email/`
+- **参考**: `docs/dev/design-system.md`
+
+**Mantine UI削除の経緯（2026-01-16）**:
+- プロジェクト要件に対して過剰な機能セット
+- バンドルサイズの増加（不要な依存関係）
+- カスタマイズの柔軟性が低い
+- Tailwind CSS 4.x + shadcn/ui パターンへ復帰（軽量・高速）
+- **Git履歴**: コミット `7f1c780e` で導入 → 最終的に削除
+
 ---
 
 ## GitHub Actions Workflows
@@ -374,6 +423,8 @@ REVIEWER_EMAIL=reviewer@example.com
 - **[docs/specs/require.md](./docs/specs/require.md)**: 要件定義書
 - **[docs/specs/architecture.md](./docs/specs/architecture.md)**: システムアーキテクチャ
 - **[docs/dev/branch.md](./docs/dev/branch.md)**: ブランチ戦略とCI/CD
+- **[docs/dev/ui-library.md](./docs/dev/ui-library.md)**: ダッシュボード用UIライブラリ仕様書
+- **[docs/dev/design-system.md](./docs/dev/design-system.md)**: メールテンプレート用デザインシステム
 - **[docs/ops/workflow.md](./docs/ops/workflow.md)**: 日常的な配信フロー
 - **[docs/ops/troubleshooting.md](./docs/ops/troubleshooting.md)**: トラブルシューティング
 - **[docs/ops/security-updates.md](./docs/ops/security-updates.md)**: セキュリティアップデート手順
@@ -468,4 +519,4 @@ CHORE: Add devcontainer configuration
 
 ---
 
-最終更新日: 2025-12-22
+最終更新日: 2026-01-19

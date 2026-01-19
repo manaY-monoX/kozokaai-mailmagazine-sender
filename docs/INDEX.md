@@ -14,7 +14,9 @@ docs/
 ├── INDEX.md          # 本索引ファイル
 ├── dev/              # 開発関連ドキュメント
 │   ├── branch.md     # ブランチ戦略とCI/CDワークフロー
-│   └── devcontainer.md  # VS Code Dev Container設定と使い方
+│   ├── devcontainer.md  # VS Code Dev Container設定と使い方
+│   ├── ui-library.md    # ダッシュボード用UIライブラリ仕様書
+│   └── design-system.md # メールテンプレート用デザインシステム
 ├── setup/            # 環境構築ガイド
 │   └── environment.md   # AWS、Resend、GitHub設定
 ├── ops/              # 運用ガイド
@@ -44,6 +46,22 @@ docs/
   - セットアップ手順（初回・2回目以降）
   - トラブルシューティング（ポート競合、認証エラー等）
   - カスタマイズガイド（拡張機能追加、ポート設定等）
+
+- **[ui-library.md](./dev/ui-library.md)** - ダッシュボード用UIライブラリ仕様書
+  - Tailwind CSS 4.x + shadcn/ui パターンの実装詳細
+  - 実装済みコンポーネント（Button, Card, Input, ArchiveCard, ArchiveFilters）
+  - cn() ユーティリティとスタイリング戦略
+  - Mantine UI削除の経緯とアーキテクチャ概要
+  - 新規コンポーネント追加手順とベストプラクティス
+  - **メールテンプレート用は design-system.md を参照**
+
+- **[design-system.md](./dev/design-system.md)** - メールテンプレート用デザインシステム
+  - インラインスタイル専用（メールクライアント互換性のため）
+  - Shadcn UIスタイルのslate系カラーパレット
+  - メールテンプレート用実装例（ボタン、カード、画像）
+  - EmailWrapper（テーブルレイアウト）とImgコンポーネント
+  - メールクライアント互換性ガイドライン
+  - **ダッシュボード用は ui-library.md を参照**
 
 ### 環境構築（setup/）
 
@@ -121,4 +139,4 @@ docs/
 
 ---
 
-最終更新日: 2025-12-29
+最終更新日: 2026-01-19
