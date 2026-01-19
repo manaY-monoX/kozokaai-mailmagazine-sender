@@ -1,0 +1,7 @@
+# TypeScript言語検出の明示的指定
+src/scripts/*.ts linguist-language=TypeScript
+
+# JavaScript設定ファイルは除外（言語統計から除外）
+*.config.js linguist-vendored
+*.config.mjs linguist-vendored
+scripts/fix-lightningcss.js linguist-vendored

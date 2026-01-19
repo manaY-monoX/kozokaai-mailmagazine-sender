@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import 'dotenv/config';
 import { execSync } from 'child_process';
 import chalk from 'chalk';

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import 'dotenv/config';
 import inquirer from "inquirer";
 import { format } from "date-fns";
