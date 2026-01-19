@@ -1,21 +1,23 @@
-name: Production - Send Email
+name: Scheduled Email Delivery
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    # 毎5分実行（UTC）
+    - cron: '*/5 * * * *'
+  # 手動実行も許可（デバッグ用）
+  workflow_dispatch:
 
 jobs:
-  production:
-    name: Send Production Email (Immediate or Scheduled Check)
+  send-scheduled:
+    name: Send Scheduled Emails
     runs-on: ubuntu-latest
-    environment: production
+    # Manual Approvalなし（無人実行）
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup pnpm
@@ -37,8 +39,9 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      - name: Check scheduled delivery and send immediate emails
-        run: npx tsx src/scripts/production-dispatcher.ts
+      # 予約配信時刻到達チェック & 配信実行
+      - name: Send scheduled emails
+        run: npx tsx src/scripts/send-scheduled-emails.ts
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
@@ -48,13 +51,14 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
 
+      # sentAt更新をコミット
       - name: Push config.json updates
         run: |
           if git diff --quiet; then
             echo "No changes to commit"
           else
             git add src/archives/**/config.json
-            git commit -m "MAIL: Update sentAt timestamps" || echo "No changes to commit"
+            git commit -m "MAIL: Update sentAt for scheduled delivery" || echo "No changes to commit"
             git push
           fi
         env:

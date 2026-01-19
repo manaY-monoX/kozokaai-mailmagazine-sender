@@ -13,6 +13,7 @@ Resend メール配信システム。Next.js + React Email + Resend API + AWS S3
 - Git + GitHub Actionsによる完全自動化されたCI/CDパイプライン
 - S3による画像ホスティング + Resend APIによる一斉配信
 - Manual Approvalによる誤送信防止機構
+- 予約配信機能（日本時間で配信日時を指定可能）
 
 ---
 
@@ -37,6 +38,7 @@ Resend メール配信システム。Next.js + React Email + Resend API + AWS S3
 - **inquirer**: 対話型CLI
 - **Zod**: スキーマ検証
 - **tsx**: TypeScript実行
+- **date-fns-tz**: タイムゾーン変換（JST ↔ UTC）
 
 ---
 
@@ -76,12 +78,14 @@ pnpm run commit
 - コミットメッセージ（例: `summer-sale`）
 - メール件名（例: `【サマーセール】最大50%OFFのお知らせ`）
 - Resend Segment ID（例: `78261eea-8f8b-4381-83c6-79fa7120f1cf`）
+- 配信タイミング（即時配信 or 予約配信）
+- 配信日時（予約配信の場合、JST、例: `2026-01-20 18:00`）
 
 スクリプトが自動的に:
 1. アーカイブディレクトリを作成（`public/archives/{YYYY}/{MM}/{DD-MSG}/`）
 2. `src/app/draft/page.tsx` → `mail.tsx` に移動
 3. `public/mail-assets/` → `assets/` に画像移動
-4. `config.json` 生成（subject, segmentId, sentAt: null）
+4. `config.json` 生成（subject, segmentId, scheduledAt, sentAt: null）
 5. `src/app/draft/page.tsx` を初期テンプレートにリセット
 6. Git commit & push（コミットメッセージ: `MAIL: {message}`）
 
@@ -128,9 +132,10 @@ kozokaai-mailmagazine-sender/
 │                   └── assets/
 ├── .github/
 │   └── workflows/              # CI/CD
-│       ├── check.yml           # Lint, Type Check, Build, Validation
-│       ├── staging.yml         # S3 Upload, Test Email Send
-│       └── production.yml      # Production Email Send (Manual Approval)
+│       ├── check.yml                      # Lint, Type Check, Build, Validation
+│       ├── staging.yml                    # S3 Upload, Test Email Send
+│       ├── production.yml                 # Production Email Send (Manual Approval)
+│       └── scheduled-email-delivery.yml   # Scheduled Email Delivery (Cron: */5)
 └── docs/                       # ドキュメント（唯一のSoT）
     ├── INDEX.md                # ドキュメント索引
     ├── specs/                  # 仕様関連
@@ -151,10 +156,12 @@ kozokaai-mailmagazine-sender/
 
 ### データフロー
 
+#### 即時配信フロー
+
 ```
 ローカル制作（src/app/draft/page.tsx）
   ↓
-pnpm run commit（アーカイブ作成）
+pnpm run commit（アーカイブ作成 + 配信タイミング: 即時配信）
   ↓
 Git push
   ↓
@@ -169,6 +176,40 @@ GitHub Actions: Staging Workflow（S3 Upload, Test Email Send）
 GitHub Actions: Production Workflow（Manual Approval待機）
   ↓
 承認ボタン押下
+  ↓
+production-dispatcher.ts（scheduledAt === null → 即時配信実行）
+  ↓
+本番配信（Resend Audience へ一斉送信）
+  ↓
+config.json の sentAt 自動更新（Git commit & push）
+```
+
+#### 予約配信フロー
+
+```
+ローカル制作（src/app/draft/page.tsx）
+  ↓
+pnpm run commit（アーカイブ作成 + 配信タイミング: 予約配信 + 日時指定）
+  ↓
+Git push
+  ↓
+GitHub Actions: Check Workflow（Lint, Build, Validation）
+  ↓
+PR作成
+  ↓
+GitHub Actions: Staging Workflow（S3 Upload, Test Email Send）
+  ↓
+レビュー・承認 → マージ
+  ↓
+GitHub Actions: Production Workflow（Manual Approval待機）
+  ↓
+承認ボタン押下
+  ↓
+production-dispatcher.ts（scheduledAt > 現在時刻 → ログ出力のみ）
+  ↓
+Scheduled Email Delivery Workflow（5分ごとcron）
+  ↓
+send-scheduled-emails.ts（scheduledAt <= 現在時刻 → 配信実行）
   ↓
 本番配信（Resend Audience へ一斉送信）
   ↓
@@ -312,8 +353,22 @@ module.exports = {
 
 **処理内容**:
 - **Manual Approval待機**（GitHub Environments機能）
-- React → HTML変換
-- Resend Audience へ一斉送信
+- `production-dispatcher.ts` を実行
+  - `scheduledAt === null` → 即時配信実行
+  - `scheduledAt > 現在時刻` → ログ出力のみ（予約配信待機）
+  - `scheduledAt <= 現在時刻` → 即時配信実行（過去日時の場合）
+- `config.json` の `sentAt` を更新してコミット（即時配信の場合のみ）
+
+### scheduled-email-delivery.yml
+**Trigger**: cron（5分ごと）、手動実行（`workflow_dispatch`）
+
+**処理内容**:
+- **Manual Approval不要**（無人実行）
+- `send-scheduled-emails.ts` を実行
+  - S3から全config.jsonを取得
+  - `scheduledAt` が現在時刻±5分以内のアーカイブを抽出
+  - 重複送信防止: `sentAt !== null` の場合はスキップ
+  - Resend Audience へ一斉送信
 - `config.json` の `sentAt` を更新してコミット
 
 ---

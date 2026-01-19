@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import inquirer from "inquirer";
-import { format } from "date-fns";
+import { format, parse, isValid } from "date-fns";
+import { fromZonedTime } from "date-fns-tz";
 import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
@@ -22,6 +23,8 @@ interface CommitAnswers {
   commitMessage: string;
   subject: string;
   segmentId: string;
+  scheduleType: 'immediate' | 'scheduled';
+  scheduledAt?: string; // ISO 8601形式（JSTで入力、UTCに変換）
 }
 
 /**
@@ -590,6 +593,42 @@ async function main() {
         return true;
       },
     },
+    {
+      type: 'list',
+      name: 'scheduleType',
+      message: '配信タイミング:',
+      choices: [
+        { name: '即時配信（PRマージ後すぐ）', value: 'immediate' },
+        { name: '予約配信（指定日時）', value: 'scheduled' },
+      ],
+      default: 'immediate',
+    },
+    {
+      type: 'input',
+      name: 'scheduledAt',
+      message: '配信日時（JST、例: 2026-01-20 18:00）:',
+      when: (answers) => answers.scheduleType === 'scheduled',
+      validate: (input: string) => {
+        if (!input || input.trim().length === 0) {
+          return '配信日時は必須です';
+        }
+
+        // 日時パース（date-fns）
+        const parsedDate = parse(input.trim(), 'yyyy-MM-dd HH:mm', new Date());
+
+        if (!isValid(parsedDate)) {
+          return '日時の形式が不正です（例: 2026-01-20 18:00）';
+        }
+
+        // 過去日時チェック（ユーザー要件: commit.ts時点で拒否）
+        const now = new Date();
+        if (parsedDate <= now) {
+          return '配信日時は現在より未来の日時を指定してください';
+        }
+
+        return true;
+      },
+    },
   ]);
 
   // 空文字の場合はデフォルト値を使用
@@ -715,10 +754,45 @@ async function main() {
   // 8. config.json 生成
   updateStepStatus("create-config", "running");
 
+  // 予約配信日時の処理
+  let scheduledAt: string | null = null;
+
+  if (answers.scheduleType === 'scheduled' && answers.scheduledAt) {
+    // JSTで入力された日時をパース
+    const jstDate = parse(answers.scheduledAt.trim(), 'yyyy-MM-dd HH:mm', new Date());
+
+    // UTCに変換（date-fns-tz）
+    const utcDate = fromZonedTime(jstDate, 'Asia/Tokyo');
+
+    // ISO 8601形式（UTC）に変換
+    scheduledAt = utcDate.toISOString(); // "2026-01-20T09:00:00.000Z"
+
+    // ユーザーへの確認メッセージ
+    console.log(chalk.cyan('\n配信予定日時:'));
+    console.log(chalk.cyan(`  JST: ${format(jstDate, 'yyyy-MM-dd HH:mm')} (日本時間)`));
+    console.log(chalk.cyan(`  UTC: ${utcDate.toISOString()} (GitHub Actions実行時刻)`));
+
+    const confirmAnswer = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'confirm',
+        message: 'この日時で予約配信しますか？',
+        default: false,
+      },
+    ]);
+
+    if (!confirmAnswer.confirm) {
+      console.log(chalk.yellow('\n操作がキャンセルされました'));
+      process.exit(0);
+    }
+    console.log();
+  }
+
   const configFile = path.join(archiveDir, "config.json");
   const config = {
     subject: answers.subject,
     segmentId: answers.segmentId,
+    scheduledAt: scheduledAt,
     sentAt: null,
   };
 
