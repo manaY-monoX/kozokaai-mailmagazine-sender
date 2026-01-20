@@ -153,6 +153,7 @@ kozokaai-mailmagazine-sender/
     │   └── environment.md
     └── ops/                    # 運用関連
         ├── workflow.md
+        ├── scheduled-delivery-verification.md
         ├── troubleshooting.md
         ├── security-updates.md
         └── todo.md
@@ -441,6 +442,7 @@ TEST_SEGMENT_ID=your_test_segment_id
 - **[docs/specs/architecture.md](./docs/specs/architecture.md)**: システムアーキテクチャ
 - **[docs/dev/branch.md](./docs/dev/branch.md)**: ブランチ戦略とCI/CD
 - **[docs/ops/workflow.md](./docs/ops/workflow.md)**: 日常的な配信フロー
+- **[docs/ops/scheduled-delivery-verification.md](./docs/ops/scheduled-delivery-verification.md)**: 予約配信の確認方法
 - **[docs/ops/troubleshooting.md](./docs/ops/troubleshooting.md)**: トラブルシューティング
 - **[docs/ops/security-updates.md](./docs/ops/security-updates.md)**: セキュリティアップデート手順
 

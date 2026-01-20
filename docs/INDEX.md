@@ -19,6 +19,7 @@ docs/
 │   └── environment.md   # AWS、Resend、GitHub設定
 ├── ops/              # 運用ガイド
 │   ├── workflow.md      # 日常的な配信フロー
+│   ├── scheduled-delivery-verification.md  # 予約配信の確認方法
 │   ├── troubleshooting.md  # トラブルシューティング
 │   ├── security-updates.md # セキュリティアップデート手順
 │   ├── todo.md          # 本番環境設定チェックリスト
@@ -61,6 +62,14 @@ docs/
   - ブランチ戦略との統合（main直接push vs feature ブランチ）
   - 緊急停止手順
   - 配信履歴の確認方法
+
+- **[scheduled-delivery-verification.md](./ops/scheduled-delivery-verification.md)** - 予約配信の確認方法
+  - GitHub Actions ワークフロー確認（即座）
+  - Resend Dashboard での配信ログ確認（中期）
+  - S3 での config.json 確認（長期）
+  - sentAt 更新メカニズムと重複送信防止
+  - 配信失敗時のトラブルシューティング
+  - 手動再配信手順
 
 - **[troubleshooting.md](./ops/troubleshooting.md)** - トラブルシューティング
   - pnpm run commit エラー対処
@@ -121,4 +130,4 @@ docs/
 
 ---
 
-最終更新日: 2025-12-29
+最終更新日: 2026-01-20
