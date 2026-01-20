@@ -1,0 +1,124 @@
+# カラーパレットルール
+
+## 概要
+このプロジェクトでは一貫したカラーパレットを使用します。
+
+## プロジェクトカラーパレット
+
+### Primary Color
+
+#### Blue（CTA/Links）
+- **用途**: CTAボタン、リンク
+- **色**: `#2563eb`（Tailwind blue-600相当）
+
+```tsx
+<EmailButton href="..." backgroundColor="#2563eb">詳細を見る</EmailButton>
+<a href="..." style={{ color: '#2563eb' }}>リンク</a>
+```
+
+### Neutral Colors（Slate系）
+
+#### Slate-50（カード背景）
+- **用途**: EmailCard背景色
+- **色**: `#f8fafc`
+
+```tsx
+<EmailCard backgroundColor="#f8fafc">{children}</EmailCard>
+```
+
+#### Slate-100（外側背景）
+- **用途**: EmailWrapper外側背景
+- **色**: `#f1f5f9`
+
+```tsx
+<table style={{ backgroundColor: '#f1f5f9' }}>...</table>
+```
+
+#### Slate-200（ボーダー）
+- **用途**: EmailCard、EmailWrapperのボーダー
+- **色**: `#e2e8f0`
+
+```tsx
+<div style={{ border: '1px solid #e2e8f0' }}>...</div>
+```
+
+#### Slate-400（Muted Text）
+- **用途**: EmailFooter、`variant="muted"` のテキスト
+- **色**: `#94a3b8`
+
+```tsx
+<EmailText variant="muted">{children}</EmailText>
+<p style={{ color: '#94a3b8' }}>...</p>
+```
+
+#### Slate-800（本文テキスト）
+- **用途**: 本文テキスト
+- **色**: `#1e293b`
+
+```tsx
+<p style={{ color: '#1e293b' }}>本文テキスト</p>
+```
+
+#### Slate-900（見出し）
+- **用途**: EmailHeading（h1/h2）
+- **色**: `#0f172a`
+
+```tsx
+<EmailHeading level={1}>{children}</EmailHeading>
+<h1 style={{ color: '#0f172a' }}>見出し</h1>
+```
+
+#### White（内側背景、ボタンテキスト）
+- **用途**: EmailWrapper内側背景、EmailButtonテキスト色
+- **色**: `#ffffff`
+
+```tsx
+<table style={{ backgroundColor: '#ffffff' }}>...</table>
+<EmailButton color="#ffffff">ボタン</EmailButton>
+```
+
+## カラー使用ルール
+
+### 推奨カラーのみ使用
+- 上記のプロジェクトカラーパレットから選択してください
+- 任意の色の使用は避けてください
+
+### カスタムカラーが必要な場合
+1. デザイナーと相談
+2. `colors.mdc` ファイルに追加
+3. CLAUDE.md と docs/ を更新
+
+### アクセシビリティ
+- **コントラスト比**: WCAG AA基準（4.5:1以上）を満たすこと
+- **テキストと背景**: 十分なコントラストを確保
+
+```tsx
+// ✅ 正しい（コントラスト十分）
+<p style={{ color: '#0f172a', backgroundColor: '#ffffff' }}>テキスト</p>
+
+// ❌ 間違い（コントラスト不足）
+<p style={{ color: '#94a3b8', backgroundColor: '#f8fafc' }}>テキスト</p>
+```
+
+## カラーコード早見表
+
+| 用途 | 色名 | カラーコード | Tailwind相当 |
+|------|------|--------------|--------------|
+| CTA/Links | Blue | `#2563eb` | blue-600 |
+| Card背景 | Slate-50 | `#f8fafc` | slate-50 |
+| 外側背景 | Slate-100 | `#f1f5f9` | slate-100 |
+| ボーダー | Slate-200 | `#e2e8f0` | slate-200 |
+| Muted Text | Slate-400 | `#94a3b8` | slate-400 |
+| 本文 | Slate-800 | `#1e293b` | slate-800 |
+| 見出し | Slate-900 | `#0f172a` | slate-900 |
+| 内側背景/ボタンテキスト | White | `#ffffff` | white |
+
+## 今後のカラー追加
+
+カラーパレットを拡張する際は、以下の手順に従ってください：
+
+1. デザイナーと相談し、ブランドカラーを決定
+2. このファイル（`colors.mdc`）に追加
+3. `CLAUDE.md` の「重要な設計パターン」セクションを更新
+4. `docs/INDEX.md` の最終更新日を更新
+5. コミットメッセージ: `DOC: カラーパレットを追加`

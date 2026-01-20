@@ -46,6 +46,13 @@ docs/
   - トラブルシューティング（ポート競合、認証エラー等）
   - カスタマイズガイド（拡張機能追加、ポート設定等）
 
+- **[cursor-rules.md](./dev/cursor-rules.md)** - Cursor IDE ルールファイル設定ガイド
+  - .cursor/rules/ ディレクトリ構成
+  - 各ルールファイルの役割（email-design.mdc, components.mdc, coding-standards.mdc, assets.mdc, colors.mdc）
+  - Cursor IDEでの使用方法とベストプラクティス
+  - ルール追加・更新手順
+  - トラブルシューティング
+
 ### 環境構築（setup/）
 
 - **[environment.md](./setup/environment.md)** - 環境構築ガイド

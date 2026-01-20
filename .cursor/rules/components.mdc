@@ -1,0 +1,93 @@
+# コンポーネント使用ルール
+
+## 概要
+このプロジェクトには専用のメール用コンポーネントが用意されています。これらのコンポーネントは必ず使用してください。
+
+## 必須コンポーネント
+
+### EmailWrapper（必須）
+- **用途**: すべてのメールの最外側レイアウト
+- **役割**: テーブルレイアウト、プレビューテキスト、EmailFooter呼び出し
+- **props**:
+  - `preview`: `true`（ブラウザプレビュー）または `false`（メール配信、デフォルト）
+  - `previewText`: メーラーの件名下に表示されるテキスト
+- **必須使用**: すべてのメールで `<EmailWrapper>` を使用してください
+
+```tsx
+// MailContent（配信用）
+<EmailWrapper preview={false} previewText="...">
+  {children}
+</EmailWrapper>
+
+// Home（ブラウザプレビュー用）
+<EmailWrapper preview={true} previewText="...">
+  {children}
+</EmailWrapper>
+```
+
+### EmailFooter（必須、削除厳禁）
+- **用途**: フッター（配信停止リンク含む）
+- **法的要件**: FTC（米国）およびGDPR（欧州）の要件により、配信停止リンクが必須
+- **⚠️ 警告**: EmailFooterコンポーネントは **絶対に削除・変更しないでください**
+- **自動呼び出し**: EmailWrapper内で自動的に呼び出されます（手動呼び出し不要）
+
+### Img（画像表示必須）
+- **用途**: 画像の表示
+- **役割**: `/mail-assets/` パスを本番S3 URLに自動変換
+- **必須使用**: すべての画像は `<Img>` コンポーネントを使用してください
+- **props**:
+  - `src`: `/mail-assets/filename.ext` 形式で指定（必須）
+  - `alt`: 代替テキスト（アクセシビリティ必須）
+  - `width`: 画像幅（推奨）
+
+```tsx
+<Img src="/mail-assets/hero.jpg" alt="Hero Image" width="600" />
+```
+
+### その他の推奨コンポーネント
+
+#### EmailSection
+- セクション区切り用
+- `<table>` ベースのレイアウト
+
+#### EmailCard
+- カード型コンテナ
+- デフォルト背景: `#f8fafc`（Slate-50）
+- ボーダー: `#e2e8f0`（Slate-200）
+
+#### EmailButton
+- CTAボタン
+- デフォルト背景: `#2563eb`（Blue-600）
+- デフォルトテキスト色: `#ffffff`
+
+```tsx
+<EmailButton href="https://example.com">詳細を見る</EmailButton>
+```
+
+#### EmailHeading
+- 見出し（h1/h2）
+- `level={1}`: 30px、`#0f172a`（Slate-900）
+- `level={2}`: 24px、`#0f172a`（Slate-900）
+
+#### EmailText
+- 本文テキスト
+- `variant="muted"`: `#94a3b8`（Slate-400）
+
+#### EmailDivider
+- 区切り線
+
+## コンポーネント実装場所
+`src/components/email/` ディレクトリ
+
+## 重要な注意事項
+
+### ❌ 禁止事項
+- EmailFooterの削除・変更
+- `{{{RESEND_UNSUBSCRIBE_URL}}}` プレースホルダーの削除・変更
+- 画像の直接 `<img>` タグ使用（必ず `<Img>` コンポーネント）
+- EmailWrapperなしでのメール作成
+
+### ✅ 推奨事項
+- 新しいコンポーネントを作成する際は、`Email*` プレフィックスを使用
+- すべてのコンポーネントは `<table>` ベースで実装
+- インラインスタイルのみ使用

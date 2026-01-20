@@ -1,0 +1,65 @@
+# メールHTML互換性ルール
+
+## 概要
+このプロジェクトはメールマガジン配信システムです。Outlook、Gmail、Apple Mailなどのメールクライアント互換性を最優先してください。
+
+## 必須ルール
+
+### レイアウト
+- **テーブルレイアウト必須**: すべてのレイアウトは `<table>` タグで実装してください。
+- **flexbox/grid禁止**: `display: flex` や `display: grid` は使用しないでください。
+- **インラインスタイル必須**: すべてのスタイルは `style` 属性で直接指定してください。
+- **CSSクラス禁止**: `className` や `<style>` タグは使用しないでください。
+
+### テーブル属性
+- `width`: 固定幅を指定（例: `width="600"`）
+- `cellPadding="0"`: 常に指定
+- `cellSpacing="0"`: 常に指定
+- `role="presentation"`: アクセシビリティのため必須
+
+### 中央揃え
+- `<td align="center">` を使用してください（`margin: 0 auto` は非対応）
+
+### 最大幅
+- メール本体の最大幅は `600px` に制限してください
+
+## メールクライアント対応
+
+### 対応ブラウザ/クライアント
+- Outlook 2007-2021（Windows）
+- Gmail（Web、iOS、Android）
+- Apple Mail（macOS、iOS）
+- Yahoo Mail
+- Thunderbird
+
+### 非対応機能
+- CSS Grid
+- Flexbox
+- CSS Variables
+- Modern CSS Selectors（`:has()`, `:where()` など）
+- External Stylesheets
+- `@media` queries（一部対応だが推奨しない）
+
+## 例
+
+### ✅ 正しい実装
+
+```tsx
+<table width="100%" cellPadding="0" cellSpacing="0" role="presentation">
+  <tbody>
+    <tr>
+      <td align="center" style={{ padding: '40px 0', backgroundColor: '#f1f5f9' }}>
+        {children}
+      </td>
+    </tr>
+  </tbody>
+</table>
+```
+
+### ❌ 間違った実装
+
+```tsx
+<div className="container" style={{ display: 'flex', justifyContent: 'center' }}>
+  {children}
+</div>
+```

@@ -1,0 +1,184 @@
+# コーディング規約（厳格モード）
+
+## 概要
+このプロジェクトでは厳格なコーディング規約を適用します。
+
+## TypeScript
+
+### 型安全性
+- **strict モード必須**: すべてのTypeScriptコードは `strict: true` で動作すること
+- **型注釈必須**: すべての関数パラメータと戻り値に型注釈を付けてください
+- **any 型禁止**: `any` 型は使用しないでください。`unknown` を検討してください
+- **型推論活用**: 変数宣言では型推論を活用（明示が必要な場合のみ型注釈）
+
+```tsx
+// ✅ 正しい
+function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+
+// ❌ 間違い
+function greet(name) {
+  return `Hello, ${name}!`;
+}
+```
+
+### interface vs type
+- **Props定義**: `interface` を使用
+- **Union/Intersection**: `type` を使用
+
+```tsx
+// Props定義
+interface EmailButtonProps {
+  href: string;
+  children: React.ReactNode;
+  backgroundColor?: string;
+}
+
+// Union型
+type Level = 1 | 2;
+```
+
+## 関数
+
+### 関数サイズ制限
+- **20行以内**: 1つの関数は20行以内に収めてください
+- **単一責任**: 1つの関数は1つの責任のみを持つこと
+
+### Early Return パターン
+- **エラーハンドリング**: 関数の最初でエラー条件をチェックし、early returnを使用
+
+```tsx
+// ✅ 正しい
+function processEmail(email: string | null): string {
+  if (!email) {
+    return '';
+  }
+
+  if (!email.includes('@')) {
+    return '';
+  }
+
+  return email.toLowerCase();
+}
+
+// ❌ 間違い（深いネスト）
+function processEmail(email: string | null): string {
+  if (email) {
+    if (email.includes('@')) {
+      return email.toLowerCase();
+    } else {
+      return '';
+    }
+  } else {
+    return '';
+  }
+}
+```
+
+## 命名規則
+
+### 変数・関数
+- **camelCase**: 変数名、関数名は camelCase
+
+```tsx
+const emailAddress = 'user@example.com';
+function sendEmail() {}
+```
+
+### コンポーネント
+- **PascalCase**: Reactコンポーネントは PascalCase
+- **Email* プレフィックス**: メール用コンポーネントは `Email*` で始める
+
+```tsx
+export function EmailButton() {}
+export function EmailCard() {}
+```
+
+### 定数
+- **UPPER_SNAKE_CASE**: グローバル定数は UPPER_SNAKE_CASE
+
+```tsx
+const MAX_EMAIL_WIDTH = 600;
+const DEFAULT_BACKGROUND_COLOR = '#f1f5f9';
+```
+
+## React
+
+### Hooks順序
+1. useState
+2. useEffect
+3. useContext
+4. カスタムHooks
+5. useCallback
+6. useMemo
+7. useRef
+
+### Props destructuring
+- 関数パラメータで destructuring
+
+```tsx
+// ✅ 正しい
+export function EmailButton({ href, children }: EmailButtonProps) {
+  return <a href={href}>{children}</a>;
+}
+
+// ❌ 間違い
+export function EmailButton(props: EmailButtonProps) {
+  return <a href={props.href}>{props.children}</a>;
+}
+```
+
+## コメント
+
+### JSDocコメント
+- すべてのexport関数/コンポーネントにJSDocコメントを付ける
+- 重要な警告は `@see` タグで参照先を明記
+
+```tsx
+/**
+ * メール用フッターコンポーネント
+ *
+ * **重要**: このコンポーネントは配信停止リンク（Unsubscribe）を含みます。
+ * FTC（米国）およびGDPR（欧州）の法的要件に準拠するため、
+ * 配信停止リンクを削除しないでください。
+ *
+ * @see docs/specs/architecture.md - 配信停止メカニズム
+ */
+export function EmailFooter() {
+  // ...
+}
+```
+
+### インラインコメント
+- 複雑なロジックには説明コメントを追加
+- 「なぜ」を説明（「何を」はコードで自明）
+
+## エラーハンドリング
+
+### 入力検証
+- すべてのユーザー入力を検証
+- 外部API呼び出しにはエラーハンドリング必須
+
+### 早期リターン
+- エラー条件は関数の最初でチェック
+
+## セキュリティ
+
+### XSS対策
+- ユーザー入力を直接HTMLに埋め込まない
+- `dangerouslySetInnerHTML` 使用禁止
+
+### 環境変数
+- 機密情報は環境変数で管理
+- `.env` ファイルは `.gitignore` で除外
+
+## パフォーマンス
+
+### 不要な再レンダリング防止
+- `React.memo` を適切に使用
+- `useMemo`/`useCallback` で最適化
+
+### 画像最適化
+- 適切なサイズにリサイズ
+- WebP形式を推奨（メールはJPEG/PNG）

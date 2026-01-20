@@ -1,0 +1,75 @@
+# アセット管理ルール
+
+## 概要
+画像やその他のアセットの管理に関するルールです。
+
+## 画像配置
+
+### ローカル開発時
+- **配置場所**: `public/mail-assets/` ディレクトリ
+- **パス**: `/mail-assets/filename.ext` 形式で指定
+
+```tsx
+<Img src="/mail-assets/hero.jpg" alt="Hero Image" width="600" />
+```
+
+### 本番配信時
+- **自動変換**: `/mail-assets/` → S3 URL（スクリプトが自動変換）
+- **S3 URL例**: `https://bucket.s3.region.amazonaws.com/archives/YYYY/MM/DD-MSG/assets/filename.ext`
+
+## 画像使用ルール
+
+### Imgコンポーネント必須
+- **必須**: すべての画像は `<Img>` コンポーネントを使用
+- **禁止**: 直接 `<img>` タグは使用しない
+
+### alt属性必須
+- **アクセシビリティ**: すべての画像に `alt` 属性を指定
+- **内容**: 画像の内容を簡潔に説明
+
+```tsx
+// ✅ 正しい
+<Img src="/mail-assets/hero.jpg" alt="夏のセール キービジュアル" width="600" />
+
+// ❌ 間違い（altなし）
+<Img src="/mail-assets/hero.jpg" width="600" />
+
+// ❌ 間違い（<img>タグ直接使用）
+<img src="/mail-assets/hero.jpg" alt="Hero" />
+```
+
+### 推奨サイズ
+- **最大幅**: 600px（EmailWrapperの内側テーブル幅）
+- **フォーマット**: JPEG（写真）、PNG（イラスト・ロゴ）
+- **容量**: 200KB以下を推奨
+
+## ファイル命名規則
+
+### 小文字・ハイフン区切り
+- ✅ `hero-image.jpg`
+- ✅ `product-photo-01.png`
+- ❌ `HeroImage.jpg`（PascalCase）
+- ❌ `product_photo_01.png`（スネークケース）
+
+### わかりやすい名前
+- 画像の内容がわかる名前を使用
+- 連番は2桁で統一（`01`, `02`, ...）
+
+## アーカイブ管理
+
+### 配信後の構造
+```
+public/archives/
+└── {YYYY}/
+    └── {MM}/
+        └── {DD-MSG}/
+            ├── mail.tsx
+            ├── config.json
+            └── assets/
+                ├── hero.jpg
+                └── product-01.png
+```
+
+### 重要な注意事項
+- **手動編集禁止**: `pnpm run commit` スクリプトが自動管理
+- **直接配置禁止**: `archives/` ディレクトリへの直接ファイル配置は禁止
