@@ -814,9 +814,13 @@ async function main() {
   console.log(chalk.cyan("\nS3へアップロード中...\n"));
 
   try {
-    // S3プレフィックスを構築
+    // クロスプラットフォーム対応: Windows/Linux/macOS
+    // Step 1: プロジェクトルートからの相対パスを取得
+    const relativePath = path.relative(PROJECT_ROOT, archiveDir);
+
+    // Step 2: すべてのパスセパレータをフォワードスラッシュに統一（S3キー形式）
     // src/archives/2026/01/14-test → archives/2026/01/14-test
-    const s3Prefix = archiveDir.replace(`${PROJECT_ROOT}/src/`, "");
+    const s3Prefix = relativePath.split(path.sep).join("/").replace(/^src\//, "");
 
     // 画像をS3にアップロード
     const assetsResults: Array<{

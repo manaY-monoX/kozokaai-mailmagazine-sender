@@ -326,7 +326,12 @@ export async function POST(request: NextRequest) {
     console.log('[API /commit] S3アップロード開始...');
 
     try {
-      const s3Prefix = archiveDir.replace(`${PROJECT_ROOT}/src/`, '');
+      // クロスプラットフォーム対応: Windows/Linux/macOS
+      // Step 1: プロジェクトルートからの相対パスを取得
+      const relativePath = path.relative(PROJECT_ROOT, archiveDir);
+
+      // Step 2: すべてのパスセパレータをフォワードスラッシュに統一（S3キー形式）
+      const s3Prefix = relativePath.split(path.sep).join('/').replace(/^src\//, '');
 
       // 画像をS3にアップロード
       const assetsResults: Array<{
