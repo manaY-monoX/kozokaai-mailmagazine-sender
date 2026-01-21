@@ -1021,6 +1021,229 @@ curl -X DELETE 'https://api.resend.com/contacts/{contact_id}' \
 
 ---
 
+## アーカイブ上書き確認メカニズム
+
+### 概要
+
+GUI（http://localhost:3000）から配信準備を実行する際、既存のアーカイブディレクトリが存在する場合に上書き確認ダイアログを表示し、ユーザーに選択させる機能を実装しています。
+
+### 実装方式
+
+**GUI実装**: Mantine Modal + 二段階リクエスト
+
+### 動作フロー
+
+```
+1. ユーザーがフォーム送信
+   ↓
+2. API: 409 Conflict（既存ディレクトリ検出）
+   ↓
+3. 確認ダイアログ表示（黄色Alert + 赤色「上書きする」ボタン）
+   ↓
+4. ユーザーが選択
+   ├─ キャンセル → Alert表示（エラーメッセージ）
+   └─ 上書き → `overwrite: true`フラグで再送信
+       ↓
+     API: `fs.rmSync()`で既存削除 → 新規作成
+       ↓
+     成功レスポンス
+```
+
+### 実装詳細
+
+#### CommitForm.tsx（`src/components/commit/CommitForm.tsx`）
+
+**State追加**（L41-42）:
+```typescript
+const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
+const [pendingRequest, setPendingRequest] = useState<CommitAnswers | null>(null);
+```
+
+**API呼び出しロジック分離**（L93-141）:
+```typescript
+const executeCommit = async (data: CommitAnswers, overwrite: boolean = false) => {
+  // 409 Conflict検出時に確認ダイアログ表示
+  if (response.status === 409 && !overwrite) {
+    setPendingRequest(data);
+    setShowOverwriteConfirm(true);
+    setLoading(false);
+    return;
+  }
+  // その他のエラーハンドリング...
+};
+```
+
+**確認ダイアログ**（L279-302）:
+```tsx
+<Modal
+  opened={showOverwriteConfirm}
+  onClose={handleOverwriteCancel}
+  title="アーカイブ上書き確認"
+  size="md"
+  centered
+  closeOnClickOutside={false}
+  withCloseButton={false}
+>
+  <Stack gap="md">
+    <Alert color="yellow" title="警告">
+      このアーカイブは既に存在します。上書きすると既存のデータが完全に削除されます。
+    </Alert>
+
+    <Group justify="flex-end" mt="md">
+      <Button variant="default" onClick={handleOverwriteCancel}>
+        キャンセル
+      </Button>
+      <Button color="red" onClick={handleOverwriteConfirm} loading={loading}>
+        上書きする
+      </Button>
+    </Group>
+  </Stack>
+</Modal>
+```
+
+**UI設計の根拠**:
+- `closeOnClickOutside={false}`: 誤操作防止（モーダル外クリックで閉じない）
+- `withCloseButton={false}`: 明示的な選択を強制（×ボタン非表示）
+- Alert + 警告色: 危険性を視覚的に強調
+- ボタン配置: キャンセル（左）、上書き（右、赤色）
+- loading state: 二重送信防止
+
+#### API Endpoint（`src/app/api/commit/route.ts`）
+
+**型定義拡張**（L21-28）:
+```typescript
+interface CommitRequestBody {
+  commitMessage: string;
+  subject: string;
+  segmentId: string;
+  scheduleType: 'immediate' | 'scheduled';
+  scheduledAt?: string;
+  overwrite?: boolean; // 追加
+}
+```
+
+**上書きロジック実装**（L213-240）:
+```typescript
+if (fs.existsSync(archiveDir)) {
+  if (!overwrite) {
+    // 上書き未承認 → 409 Conflict
+    return NextResponse.json(
+      {
+        success: false,
+        message: `アーカイブ ${dd}-${commitMessage} は既に存在します`,
+      },
+      { status: 409 }
+    );
+  }
+
+  // 上書き承認済み → 既存ディレクトリ削除
+  console.log('[API /commit] 既存アーカイブを削除中...', archiveDir);
+  try {
+    fs.rmSync(archiveDir, { recursive: true, force: true });
+    console.log('[API /commit] 既存アーカイブ削除完了');
+  } catch (deleteError) {
+    console.error('[API /commit] アーカイブ削除エラー:', deleteError);
+    return NextResponse.json(
+      {
+        success: false,
+        message: '既存アーカイブの削除に失敗しました。ファイルがロックされている可能性があります。',
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### エラーハンドリング
+
+#### 通常エラー（400, 500など）
+
+```
+ユーザー送信
+  ↓
+API処理（バリデーション/処理エラー）
+  ↓
+CommitForm: result State更新
+  ↓
+Alert表示（赤色、エラーメッセージ）
+```
+
+#### アーカイブ既存エラー（409）
+
+```
+ユーザー送信
+  ↓
+API: 409 Conflict返却
+  ↓
+CommitForm: showOverwriteConfirm = true
+  ↓
+確認ダイアログ表示
+  ├─ キャンセル → Alert表示（エラーメッセージ）
+  └─ 上書き → overwrite: true で再送信
+       ↓
+     API: 既存削除 → 新規作成
+       ↓
+     成功レスポンス
+```
+
+#### 削除失敗エラー（500）
+
+```
+上書き承認 → API呼び出し
+  ↓
+fs.rmSync() エラー（権限不足/ロック）
+  ↓
+500エラー + 詳細メッセージ
+  ↓
+Alert表示「既存アーカイブの削除に失敗しました...」
+```
+
+### セキュリティ考慮事項
+
+#### ディレクトリトラバーサル対策
+
+現在の実装は安全:
+- `commitMessage`のバリデーション（L48-52）で`/\:*?"<>|`を禁止
+- `path.join()`で安全にパス結合
+- `fs.existsSync()`でディレクトリ存在確認後に削除
+
+#### レースコンディション対策
+
+**潜在的リスク**: 同時に2つのリクエストが同じアーカイブを上書き
+
+**緩和策**（現実装で十分）:
+- Git pushが最終的な排他制御として機能
+- 同一ブランチで同時コミットは失敗する
+- GitHub ActionsのCheckワークフローで検証
+
+### CLI版との一貫性
+
+| 項目 | CLI (`commit.ts` L660-683) | GUI（本実装） |
+|------|---------------------------|--------------|
+| 確認UI | `inquirer.prompt()` | Mantine Modal |
+| 削除処理 | `fs.rmSync()` 同一 | `fs.rmSync()` 同一 |
+| エラーハンドリング | プロセス終了 | 500エラー返却 |
+| ユーザー体験 | ターミナル対話 | GUIダイアログ |
+
+### パフォーマンス影響
+
+#### APIレスポンスタイム
+
+- 通常フロー: 変更なし
+- 上書きフロー: `fs.rmSync()`のオーバーヘッド（通常 < 100ms）
+- S3アップロード時間が支配的（数百ms〜数秒）
+
+**結論**: 体感上の影響なし
+
+#### ネットワークリクエスト
+
+- 通常: 1回（POST /api/commit）
+- 上書き: 2回（初回 → 409 → 再送信）
+
+**結論**: 上書きは例外的な操作なので許容範囲
+
+---
+
 ## 関連ドキュメント
 
 - **要件定義書**: [docs/specs/require.md](./require.md)
