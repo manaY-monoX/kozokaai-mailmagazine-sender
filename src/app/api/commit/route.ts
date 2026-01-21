@@ -24,6 +24,7 @@ interface CommitRequestBody {
   segmentId: string;
   scheduleType: 'immediate' | 'scheduled';
   scheduledAt?: string;
+  overwrite?: boolean;
 }
 
 /**
@@ -172,12 +173,15 @@ export async function POST(request: NextRequest) {
     const body: CommitRequestBody = await request.json();
     const { commitMessage, subject, segmentId, scheduleType, scheduledAt } = body;
 
+    const { overwrite = false } = body;
+
     console.log('[API /commit] リクエスト受信:', {
       commitMessage,
       subject,
       segmentId,
       scheduleType,
       scheduledAt,
+      overwrite,
     });
 
     // 2. バリデーション
@@ -207,13 +211,32 @@ export async function POST(request: NextRequest) {
     console.log('[API /commit] アーカイブディレクトリ:', archiveDir);
 
     if (fs.existsSync(archiveDir)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `アーカイブ ${dd}-${commitMessage} は既に存在します`,
-        },
-        { status: 409 }
-      );
+      if (!overwrite) {
+        // 上書き未承認 → 409 Conflict
+        return NextResponse.json(
+          {
+            success: false,
+            message: `アーカイブ ${dd}-${commitMessage} は既に存在します`,
+          },
+          { status: 409 }
+        );
+      }
+
+      // 上書き承認済み → 既存ディレクトリ削除
+      console.log('[API /commit] 既存アーカイブを削除中...', archiveDir);
+      try {
+        fs.rmSync(archiveDir, { recursive: true, force: true });
+        console.log('[API /commit] 既存アーカイブ削除完了');
+      } catch (deleteError) {
+        console.error('[API /commit] アーカイブ削除エラー:', deleteError);
+        return NextResponse.json(
+          {
+            success: false,
+            message: '既存アーカイブの削除に失敗しました。ファイルがロックされている可能性があります。',
+          },
+          { status: 500 }
+        );
+      }
     }
 
     fs.mkdirSync(archiveDir, { recursive: true });
