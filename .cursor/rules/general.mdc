@@ -7,6 +7,17 @@ description: "Cursor IDEを使用してこのシステムを開発する上で�
 
 このファイルは、kozokaAI メールマガジン配信システムのプロジェクト全体に適用されるルールを定義します。
 
+## 非エンジニア向けリソース
+
+メールデザインを行う非エンジニアの方は、以下のリソースを活用してください：
+- **安全ガイド**: `.cursor/rules/non-engineer-safety.mdc`
+- **初心者向けガイド**: `docs/for-non-engineers/getting-started.md`
+- **コンポーネントリファレンス**: `docs/for-non-engineers/component-reference.md`
+- **よくあるエラー**: `docs/for-non-engineers/common-errors.md`
+- **kozokaAI ブランドガイド**: `docs/for-non-engineers/brand-guide.md`
+
+---
+
 ## プロジェクト概要
 
 Resend メール配信システム。Next.js + React Email + Resend API + AWS S3 を組み合わせた、マーケティング担当者向けメールマガジン配信システムです。

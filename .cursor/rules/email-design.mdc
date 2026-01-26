@@ -1,6 +1,19 @@
+---
+alwaysApply: false
+
+---
 # メールデザイン作成ルール
 
 このファイルは、Cursor IDEでメールテンプレートを作成・編集する際に守るべきルールを定義します。
+
+## 非エンジニア向けガイド
+
+初めてメールデザインを行う方は、まず以下を確認してください：
+- **安全ガイド**: `.cursor/rules/non-engineer-safety.mdc`
+- **初心者向けガイド**: `docs/for-non-engineers/getting-started.md`
+- **よくあるエラー**: `docs/for-non-engineers/common-errors.md`
+
+---
 
 ## 基本原則
 

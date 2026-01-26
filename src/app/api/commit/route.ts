@@ -277,14 +277,14 @@ export async function POST(request: NextRequest) {
     if (fs.existsSync(MAIL_ASSETS_DIR)) {
       const files = fs.readdirSync(MAIL_ASSETS_DIR);
       if (files.length > 0) {
-        console.log(`[API /commit] 画像ファイル移動中... (${files.length}件)`);
+        console.log(`[API /commit] 画像ファイルコピー中... (${files.length}件)`);
         files.forEach((file) => {
           const srcPath = path.join(MAIL_ASSETS_DIR, file);
           const destPath = path.join(assetsDir, file);
           fs.copyFileSync(srcPath, destPath);
-          fs.unlinkSync(srcPath);
+          // 元ファイルは削除しない（再編集時のため保持）
         });
-        console.log('[API /commit] 画像ファイル移動完了');
+        console.log('[API /commit] 画像ファイルコピー完了');
       } else {
         console.log('[API /commit] 警告: MAIL-ASSETS/ に画像がありません');
       }

@@ -7,13 +7,20 @@ globs: *.html, *.md, *.txt, emails/**/*
 
 あなたは株式会社 kozokaAI のメールマーケティング担当 AI です。以下のガイドラインに従って、メールの原稿作成、デザインコード（HTML）の生成、およびレビューを行ってください。
 
+## 非エンジニア向け: kozokaAI ブランドガイド
+
+詳細なブランドガイドは以下を参照：
+- **ブランドガイド**: `docs/for-non-engineers/brand-guide.md`
+
+---
+
 ## 1. 基本設定 (Basic Settings)
 
 ### 送信者情報
 
 - **送信者名:** `kozokaAI BOOSTマガジン`
-- **送信元アドレス:** `kozokaai@mono-x.com`
-- **返信先アドレス:** `kozokaai@mono-x.com`
+- **送信元アドレス:** `newsletter@kozokaai.jp`
+- **返信先アドレス:** `newsletter@kozokaai.jp`
 
 ### 内部管理・命名規則
 
@@ -37,10 +44,9 @@ globs: *.html, *.md, *.txt, emails/**/*
 
 - **会社名:** `kozokaAI` (コゾカエーアイ)
 - **製品:**
-  - `FAX受注入力AI`
-  - `商談ログAI`
-  - `基幹データAIインサイト`
-- **キャラクター:** `注注くん` (ちゅうちゅうくん)
+  - `FAX受注入力AI` (https://kozoka.ai/fax) - イメージキャラクター: 注注くん
+  - `商談ログAI` (https://kozoka.ai/voice)
+  - `インサイトAI` (https://kozoka.ai/insight)
 
 **重要**: 製品名やキャラクター名は必ず正確に記述し、誤字脱字がないか確認すること。
 
@@ -147,13 +153,13 @@ import { EmailText } from '@/components/email/EmailText';
     <p style={{ margin: "8px 0" }}>
       Web:{" "}
       <a
-        href="https://www.kozoka-ai.co.jp/"
+        href="https://www.kozoka-ai.co.jp"
         style={{
           color: "#2563eb",
           textDecoration: "none",
         }}
       >
-        https://www.kozoka-ai.co.jp/
+        https://www.kozoka-ai.co.jp
       </a>
       <br />
       住所: 東京都港区六本木6-10-1 六本木ヒルズ森タワー 17F
@@ -215,7 +221,7 @@ import { EmailText } from '@/components/email/EmailText';
 
 - **プライバシーポリシー:** `https://www.kozoka-ai.co.jp/assets/documents/kozokaAI-privacy-policy.pdf`
 - **配信解除 (Unsubscribe):** `{{{RESEND_UNSUBSCRIBE_URL}}}` プレースホルダーを使用
-- **会社 Web サイト:** `https://www.kozoka-ai.co.jp/`
+- **会社 Web サイト:** `https://www.kozoka-ai.co.jp`
 
 **実装時の注意**:
 
@@ -234,7 +240,7 @@ AI がコンテンツをレビューする際は、以下の項目を確認し�
 - [ ] **件名:** メールの用件を的確に表しているか？
 - [ ] **プレビューテキスト:** 140 文字以内で、記事の魅力を伝えているか？
 - [ ] **トーン＆マナー:** 「です・ます」調で、プロフェッショナルな口調か？
-- [ ] **用語:** 製品名・キャラクター名が正確に記述されているか？（`kozokaAI`, `FAX受注入力AI`, `商談ログAI`, `基幹データAIインサイト`, `注注くん`）
+- [ ] **用語:** 製品名が正確に記述されているか？（`kozokaAI`, `FAX受注入力AI`, `商談ログAI`, `インサイトAI`）
 
 ### デザイン確認
 
@@ -322,7 +328,7 @@ export function MailContent() {
             注注くんが、より使いやすくなりました。
           </EmailText>
           <div style={{ textAlign: "center", marginTop: "24px" }}>
-            <EmailButton href="https://www.kozoka-ai.co.jp/">
+            <EmailButton href="https://www.kozoka-ai.co.jp">
               詳細を見る
             </EmailButton>
           </div>
@@ -352,13 +358,13 @@ export function MailContent() {
           <p style={{ margin: "8px 0" }}>
             Web:{" "}
             <a
-              href="https://www.kozoka-ai.co.jp/"
+              href="https://www.kozoka-ai.co.jp"
               style={{
                 color: "#2563eb",
                 textDecoration: "none",
               }}
             >
-              https://www.kozoka-ai.co.jp/
+              https://www.kozoka-ai.co.jp
             </a>
             <br />
             住所: 東京都港区六本木6-10-1 六本木ヒルズ森タワー 17F

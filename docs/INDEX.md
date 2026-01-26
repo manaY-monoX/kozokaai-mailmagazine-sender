@@ -45,11 +45,13 @@ docs/
   - 環境セットアップから配信までのステップバイステップ
   - Hello World サンプル、画像追加、ボタン追加
   - 配信準備（pnpm run commit）と本番配信（Manual Approval）
+  - MailContentBody パターン（DRY化、コード重複防止、保守性向上）
   - 作成前・作成中・配信前チェックリスト
 
 - **[component-reference.md](./for-non-engineers/component-reference.md)** - コンポーネントリファレンス
   - メールデザインで使えるコンポーネント（部品）の視覚的リファレンス
-  - EmailWrapper、EmailSection、EmailCard、EmailHeading、EmailText、EmailButton、Img、EmailDivider
+  - EmailWrapper、EmailHeader、EmailSection、EmailCard、EmailHeading、EmailText、EmailButton、Img、EmailDivider
+  - EmailHeader: kozokaAI ブランドヘッダーの統一管理（誤削除防止、S3 自動置換）
   - 各コンポーネントの用途、必須プロパティ、デフォルト値、実装例、注意事項
   - コピー＆ペーストできる実装例
   - kozokaAI BOOST マガジンの完全な実装例

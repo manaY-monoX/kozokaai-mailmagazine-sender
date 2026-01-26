@@ -96,7 +96,7 @@ const STEPS: Step[] = [
     status: "pending",
   },
   { id: "move-mail", name: "mail.tsx 移動", status: "pending" },
-  { id: "move-assets", name: "画像ファイル移動", status: "pending" },
+  { id: "move-assets", name: "画像ファイルコピー", status: "pending" },
   { id: "create-config", name: "config.json 生成", status: "pending" },
   {
     id: "s3-upload",
@@ -742,12 +742,12 @@ async function main() {
   if (fs.existsSync(MAIL_ASSETS_DIR)) {
     const files = fs.readdirSync(MAIL_ASSETS_DIR);
     if (files.length > 0) {
-      console.log(chalk.cyan(`画像ファイルを移動中... (${files.length}件)`));
+      console.log(chalk.cyan(`画像ファイルをコピー中... (${files.length}件)`));
       files.forEach((file) => {
         const srcPath = path.join(MAIL_ASSETS_DIR, file);
         const destPath = path.join(assetsDir, file);
         fs.copyFileSync(srcPath, destPath);
-        fs.unlinkSync(srcPath); // 元ファイルを削除
+        // 元ファイルは削除しない（再編集時のため保持）
       });
     } else {
       console.log(chalk.yellow("警告: MAIL-ASSETS/ に画像がありません"));
@@ -755,7 +755,7 @@ async function main() {
   }
 
   updateStepStatus("move-assets", "success");
-  console.log(chalk.green("✓ 画像ファイル移動"));
+  console.log(chalk.green("✓ 画像ファイルコピー"));
 
   // 8. config.json 生成
   updateStepStatus("create-config", "running");
