@@ -125,11 +125,6 @@ export function CommitForm({ onSuccess }: CommitFormProps) {
       setResult(responseData);
       setShowOverwriteConfirm(false);
       setPendingRequest(null);
-      if (onSuccess) {
-        setTimeout(() => {
-          onSuccess();
-        }, 2000);
-      }
     } catch (error) {
       setResult({
         success: false,
@@ -271,6 +266,20 @@ export function CommitForm({ onSuccess }: CommitFormProps) {
                 アーカイブ: <code>{result.archiveDir}</code>
               </div>
             )}
+            <Button
+              mt="md"
+              size="sm"
+              variant="light"
+              color={result.success ? 'green' : 'red'}
+              onClick={() => {
+                setResult(null);
+                if (result.success && onSuccess) {
+                  onSuccess();
+                }
+              }}
+            >
+              OK
+            </Button>
           </Alert>
         )}
       </Stack>
