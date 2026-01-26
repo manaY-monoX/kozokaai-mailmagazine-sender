@@ -13,7 +13,6 @@ const PROJECT_ROOT = process.cwd();
 const DRAFT_FILE = path.join(PROJECT_ROOT, 'src/app/page.tsx');
 const MAIL_ASSETS_DIR = path.join(PROJECT_ROOT, 'public/MAIL-ASSETS');
 const ARCHIVES_DIR = path.join(PROJECT_ROOT, 'src/archives');
-const TEMPLATE_FILE = path.join(PROJECT_ROOT, 'src/app/draft/template.tsx');
 
 /**
  * リクエストボディの型定義
@@ -386,16 +385,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 10. page.tsx のリセット
-    if (fs.existsSync(TEMPLATE_FILE)) {
-      console.log('[API /commit] page.tsx をリセット中...');
-      fs.copyFileSync(TEMPLATE_FILE, DRAFT_FILE);
-      console.log('[API /commit] page.tsx リセット完了');
-    } else {
-      console.log('[API /commit] 警告: template.tsx が見つかりません（page.tsx リセットスキップ）');
-    }
-
-    // 11. Git 操作
+    // 10. Git 操作
     console.log('[API /commit] Git操作開始...');
 
     // git add
@@ -448,7 +438,7 @@ export async function POST(request: NextRequest) {
     }
     console.log('[API /commit] git push 完了');
 
-    // 12. 成功レスポンス
+    // 11. 成功レスポンス
     return NextResponse.json({
       success: true,
       message: '配信準備が完了しました。PRを作成してレビュー依頼してください。',

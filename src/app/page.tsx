@@ -38,23 +38,6 @@ function MailContentBody() {
       {/* ヘッダー画像（統一管理） */}
       <EmailHeader />
 
-      {/* ヘッダー画像 */}
-      <EmailSection>
-        <EmailCard backgroundColor="#ffffff" padding="0">
-          <Img
-            src="/MAIL-ASSETS/placeholder.webp"
-            alt="ヘッダー画像"
-            width="520"
-            style={{
-              width: '100%',
-              height: 'auto',
-              display: 'block',
-              borderRadius: '8px',
-            }}
-          />
-        </EmailCard>
-      </EmailSection>
-
       {/* タイトルセクション */}
       <EmailSection>
         <EmailHeading level={1}>サンプルメールマガジン</EmailHeading>
